@@ -1,0 +1,166 @@
+.movie-card {
+    position: relative;
+    width: 180px;
+    flex-shrink: 0;
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    transition: transform var(--transition), border-color var(--transition);
+    cursor: pointer;
+}
+
+.movie-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    border-color: #3a3a3a;
+}
+
+.movie-card:hover .movie-card-overlay {
+    opacity: 1;
+}
+
+.movie-card:hover .movie-card-img {
+    transform: scale(1.05);
+}
+
+/* ── Poster ── */
+.movie-card-poster {
+    position: relative;
+    aspect-ratio: 2/3;
+    overflow: hidden;
+    background: var(--surface-2);
+}
+
+.movie-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.movie-card-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 32px;
+    color: var(--border);
+}
+
+.movie-card-placeholder span {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+/* ── Badge note (style IMDB gold) ── */
+.movie-card-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 3px 7px;
+    border-radius: 4px;
+    background: rgba(13, 13, 13, 0.82);
+    border: 1px solid rgba(245, 197, 24, 0.3);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--gold);
+    backdrop-filter: blur(4px);
+}
+
+/* ── Badge Série ── */
+.movie-card-type {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: rgba(13, 13, 13, 0.8);
+    border: 1px solid var(--border);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+/* ── Overlay hover ── */
+.movie-card-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top,
+            rgba(13, 13, 13, 0.95) 0%,
+            rgba(13, 13, 13, 0.5) 50%,
+            transparent 100%);
+    opacity: 0;
+    transition: opacity var(--transition);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 14px;
+    gap: 8px;
+}
+
+.movie-card-overlay-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.2;
+}
+
+.movie-card-overlay-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 10px;
+    border-radius: var(--radius);
+    background: var(--accent);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 500;
+    transition: background var(--transition);
+}
+
+.movie-card-overlay-btn:hover {
+    background: var(--accent-hover);
+}
+
+/* ── Infos bas ── */
+.movie-card-info {
+    padding: 10px 12px 12px;
+}
+
+.movie-card-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+}
+
+.movie-card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.movie-card-year {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.movie-card-price {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gold);
+}
