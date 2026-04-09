@@ -11,14 +11,11 @@ $activePage = 'home';
 
 $lastPurchasedMovieId = $_SESSION['last_purchased_movie_id'] ?? null;
 
-
-
-$mainSection = tmdb_get_recommendations($lastPurchasedMovieId, 12);
-
+// Appels TMDB
+$mainSection   = tmdb_get_recommendations($lastPurchasedMovieId, 12);
 $featuredId    = $mainSection['movies'][0]['id'] ?? null;
 $featuredMovie = $featuredId ? tmdb_get_movie_detail($featuredId) : null;
-
-$nowPlaying = tmdb_get_now_playing(12);
+$nowPlaying    = tmdb_get_now_playing(12);
 
 include 'partials/head.php';
 include 'partials/loader.php';
@@ -55,27 +52,31 @@ include 'partials/navbar.php';
       <?php if (!empty($featuredMovie['year'])): ?>
         <span class="hero-tag"><?= htmlspecialchars($featuredMovie['year']) ?></span>
       <?php endif; ?>
+
       <?php if (!empty($featuredMovie['genre'])): ?>
         <div class="hero-sep"></div>
         <span class="hero-tag"><?= htmlspecialchars($featuredMovie['genre']) ?></span>
       <?php endif; ?>
+
       <?php if (!empty($featuredMovie['note'])): ?>
         <div class="hero-sep"></div>
         <span class="hero-note">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="var(--c-accent)" stroke="none">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="var(--gold)" stroke="none">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
           </svg>
           <?= number_format((float)$featuredMovie['note'], 1) ?>/10
         </span>
       <?php endif; ?>
+
       <?php if (!empty($featuredMovie['duration'])): ?>
         <div class="hero-sep"></div>
         <span class="hero-tag"><?= (int)$featuredMovie['duration'] ?> min</span>
       <?php endif; ?>
+
       <?php if (!empty($featuredMovie['director'])): ?>
         <div class="hero-sep"></div>
-        <span style="font-size:13px;color:var(--c-muted);">
-          Réal. <strong style="color:var(--c-text);font-weight:500;"><?= htmlspecialchars($featuredMovie['director']) ?></strong>
+        <span style="font-size:13px;color:var(--text-muted);">
+          Réal.&nbsp;<strong style="color:var(--text);font-weight:500;"><?= htmlspecialchars($featuredMovie['director']) ?></strong>
         </span>
       <?php endif; ?>
     </div>
@@ -84,7 +85,6 @@ include 'partials/navbar.php';
     <p class="hero-synopsis"><?= htmlspecialchars($featuredMovie['synopsis']) ?></p>
     <?php endif; ?>
 
-    <!-- Prix -->
     <?php if (!empty($featuredMovie['price'])): ?>
     <div class="hero-price-row">
       <span class="hero-price-unit">
@@ -98,18 +98,15 @@ include 'partials/navbar.php';
 
     <div class="hero-actions">
       <a href="/frontend/pages/movie-detail.php?id=<?= (int)$featuredMovie['id'] ?>" class="btn-primary">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>
         </svg>
         Voir le film
       </a>
 
       <?php if (!empty($featuredMovie['trailer_key'])): ?>
-      <button
-        class="btn-ghost"
-        onclick="openTrailer('<?= htmlspecialchars($featuredMovie['trailer_key']) ?>')"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+      <button class="btn-ghost" onclick="openTrailer('<?= htmlspecialchars($featuredMovie['trailer_key']) ?>')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
           <polygon points="5 3 19 12 5 21 5 3"/>
         </svg>
         Bande-annonce
@@ -118,10 +115,11 @@ include 'partials/navbar.php';
     </div>
 
     <?php if (!empty($featuredMovie['cast'])): ?>
-    <div style="margin-top:var(--gap-xl);display:flex;align-items:center;gap:var(--gap-md);flex-wrap:wrap;">
-      <span style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--c-muted);">Avec</span>
-      <?php foreach ($featuredMovie['cast'] as $actor): ?>
-      <span style="font-size:13px;color:var(--c-text);"><?= htmlspecialchars($actor['name']) ?></span>
+    <div class="hero-cast">
+      <span class="hero-cast-label">Avec</span>
+      <?php foreach ($featuredMovie['cast'] as $i => $actor): ?>
+        <?php if ($i > 0): ?><span class="hero-cast-sep">·</span><?php endif; ?>
+        <span class="hero-cast-name"><?= htmlspecialchars($actor['name']) ?></span>
       <?php endforeach; ?>
     </div>
     <?php endif; ?>
@@ -130,7 +128,10 @@ include 'partials/navbar.php';
 </section>
 <?php endif; ?>
 
+
+
 <div class="container home-sections">
+
 
   <section class="section-cat" id="section-main">
     <div class="section-header">
@@ -150,7 +151,7 @@ include 'partials/navbar.php';
     <?php if (!empty($mainSection['movies'])): ?>
     <div class="carousel-wrap">
       <button class="carousel-btn prev" aria-label="Précédent">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <path d="M15 18l-6-6 6-6"/>
         </svg>
       </button>
@@ -160,15 +161,16 @@ include 'partials/navbar.php';
         <?php endforeach; ?>
       </div>
       <button class="carousel-btn next" aria-label="Suivant">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <path d="M9 18l6-6-6-6"/>
         </svg>
       </button>
     </div>
     <?php else: ?>
-    <p style="color:var(--c-muted);font-size:14px;">Aucun film disponible.</p>
+    <p style="color:var(--text-muted);font-size:14px;">Aucun film disponible.</p>
     <?php endif; ?>
   </section>
+
 
   <?php if (!empty($nowPlaying)): ?>
   <section class="section-cat" id="section-sorties">
@@ -188,7 +190,7 @@ include 'partials/navbar.php';
 
     <div class="carousel-wrap">
       <button class="carousel-btn prev" aria-label="Précédent">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <path d="M15 18l-6-6 6-6"/>
         </svg>
       </button>
@@ -198,7 +200,7 @@ include 'partials/navbar.php';
         <?php endforeach; ?>
       </div>
       <button class="carousel-btn next" aria-label="Suivant">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <path d="M9 18l6-6-6-6"/>
         </svg>
       </button>
@@ -208,20 +210,17 @@ include 'partials/navbar.php';
 
 </div>
 
+
 <div id="trailer-modal"
-     style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.88);
-            backdrop-filter:blur(12px);align-items:center;justify-content:center;"
+     style="display:none;position:fixed;inset:0;z-index:1000;
+            background:rgba(0,0,0,0.9);backdrop-filter:blur(10px);
+            align-items:center;justify-content:center;"
      onclick="closeTrailerOnBg(event)">
   <div class="trailer-modal-inner">
     <button class="trailer-close" onclick="closeTrailer()" aria-label="Fermer">&#x2715;</button>
     <div class="trailer-embed">
-      <iframe
-        id="trailer-iframe"
-        src=""
-        frameborder="0"
-        allowfullscreen
-        allow="autoplay; encrypted-media"
-      ></iframe>
+      <iframe id="trailer-iframe" src="" frameborder="0"
+              allowfullscreen allow="autoplay; encrypted-media"></iframe>
     </div>
   </div>
 </div>
