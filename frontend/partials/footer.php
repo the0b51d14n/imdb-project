@@ -1,10 +1,15 @@
-<?php if (!isset($basePath)) {
-    $basePath = rtrim(str_replace('\\', '/', dirname(dirname($_SERVER['SCRIPT_NAME']))), '/');
-} ?>
+<?php
+if (!isset($basePath)) {
+    $scriptDir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
+    $basePath  = str_ends_with($scriptDir, '/pages') ? dirname($scriptDir) : $scriptDir;
+}
+?>
 <footer class="footer">
   <div class="footer-inner">
 
-    <div class="footer-logo">SUPINFO<span>.TV</span></div>
+    <a href="<?= $basePath ?>/index.php" class="footer-logo">
+      SUPINFO<span>.TV</span>
+    </a>
 
     <p class="footer-copy">
       &copy; <?= date('Y') ?> Supinfo.TV — Projet académique.
@@ -21,3 +26,7 @@
 
   </div>
 </footer>
+
+<script src="<?= $basePath ?>/assets/js/components/loader.js"></script>
+<script src="<?= $basePath ?>/assets/js/components/navbar.js"></script>
+<script src="<?= $basePath ?>/assets/js/components/logout-button.js"></script>

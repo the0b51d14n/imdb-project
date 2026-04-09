@@ -16,7 +16,6 @@ $featuredId    = $mainSection['movies'][0]['id'] ?? null;
 $featuredMovie = $featuredId ? tmdb_get_movie_detail($featuredId) : null;
 $nowPlaying    = tmdb_get_now_playing(12);
 
-// Chemin de base dynamique (compatible XAMPP quel que soit le nom du dossier projet)
 $basePath = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
 
 include __DIR__ . '/partials/head.php';
@@ -218,8 +217,6 @@ include __DIR__ . '/partials/navbar.php';
 
 <?php include __DIR__ . '/partials/footer.php'; ?>
 
-<script src="<?= $basePath ?>/assets/js/components/loader.js"></script>
-<script src="<?= $basePath ?>/assets/js/components/navbar.js"></script>
 <script src="<?= $basePath ?>/assets/js/pages/home.js"></script>
 
 </body>
