@@ -6,12 +6,16 @@
   <meta name="description" content="<?= htmlspecialchars($pageDesc ?? 'Supinfo.TV') ?>">
   <title><?= htmlspecialchars($pageTitle ?? 'Supinfo.TV') ?> — Supinfo.TV</title>
 
-  <link rel="stylesheet" href="/frontend/assets/css/app.css">
+  <?php
+  $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+  $basePath  = rtrim($scriptDir, '/');
+  ?>
+
+  <link rel="stylesheet" href="<?= $basePath ?>/assets/css/app.css">
 
   <?php if (!empty($pageCSS)): ?>
-  <link rel="stylesheet" href="/frontend/assets/css/<?= htmlspecialchars($pageCSS) ?>">
+  <link rel="stylesheet" href="<?= $basePath ?>/assets/css/<?= htmlspecialchars($pageCSS) ?>">
   <?php endif; ?>
 
-  <link rel="icon" href="/frontend/assets/images/brand/favicon.ico" type="image/x-icon">
 </head>
 <body>

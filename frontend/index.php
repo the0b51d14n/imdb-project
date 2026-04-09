@@ -11,15 +11,17 @@ $activePage = 'home';
 
 $lastPurchasedMovieId = $_SESSION['last_purchased_movie_id'] ?? null;
 
-// Appels TMDB
 $mainSection   = tmdb_get_recommendations($lastPurchasedMovieId, 12);
 $featuredId    = $mainSection['movies'][0]['id'] ?? null;
 $featuredMovie = $featuredId ? tmdb_get_movie_detail($featuredId) : null;
 $nowPlaying    = tmdb_get_now_playing(12);
 
-include 'partials/head.php';
-include 'partials/loader.php';
-include 'partials/navbar.php';
+// Chemin de base dynamique (compatible XAMPP quel que soit le nom du dossier projet)
+$basePath = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
+
+include __DIR__ . '/partials/head.php';
+include __DIR__ . '/partials/loader.php';
+include __DIR__ . '/partials/navbar.php';
 ?>
 
 <main style="padding-top:0;">
@@ -52,12 +54,10 @@ include 'partials/navbar.php';
       <?php if (!empty($featuredMovie['year'])): ?>
         <span class="hero-tag"><?= htmlspecialchars($featuredMovie['year']) ?></span>
       <?php endif; ?>
-
       <?php if (!empty($featuredMovie['genre'])): ?>
         <div class="hero-sep"></div>
         <span class="hero-tag"><?= htmlspecialchars($featuredMovie['genre']) ?></span>
       <?php endif; ?>
-
       <?php if (!empty($featuredMovie['note'])): ?>
         <div class="hero-sep"></div>
         <span class="hero-note">
@@ -67,12 +67,10 @@ include 'partials/navbar.php';
           <?= number_format((float)$featuredMovie['note'], 1) ?>/10
         </span>
       <?php endif; ?>
-
       <?php if (!empty($featuredMovie['duration'])): ?>
         <div class="hero-sep"></div>
         <span class="hero-tag"><?= (int)$featuredMovie['duration'] ?> min</span>
       <?php endif; ?>
-
       <?php if (!empty($featuredMovie['director'])): ?>
         <div class="hero-sep"></div>
         <span style="font-size:13px;color:var(--text-muted);">
@@ -97,13 +95,12 @@ include 'partials/navbar.php';
     <?php endif; ?>
 
     <div class="hero-actions">
-      <a href="/frontend/pages/movie-detail.php?id=<?= (int)$featuredMovie['id'] ?>" class="btn-primary">
+      <a href="<?= $basePath ?>/pages/movie-detail.php?id=<?= (int)$featuredMovie['id'] ?>" class="btn-primary">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>
         </svg>
         Voir le film
       </a>
-
       <?php if (!empty($featuredMovie['trailer_key'])): ?>
       <button class="btn-ghost" onclick="openTrailer('<?= htmlspecialchars($featuredMovie['trailer_key']) ?>')">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -128,10 +125,7 @@ include 'partials/navbar.php';
 </section>
 <?php endif; ?>
 
-
-
 <div class="container home-sections">
-
 
   <section class="section-cat" id="section-main">
     <div class="section-header">
@@ -140,7 +134,7 @@ include 'partials/navbar.php';
         <h2 class="section-title"><?= htmlspecialchars($mainSection['label']) ?></h2>
         <p class="section-subtitle"><?= htmlspecialchars($mainSection['subtitle']) ?></p>
       </div>
-      <a href="/frontend/pages/movies.php" class="btn-more">
+      <a href="<?= $basePath ?>/pages/movies.php" class="btn-more">
         Voir plus
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -157,7 +151,7 @@ include 'partials/navbar.php';
       </button>
       <div class="carousel-track">
         <?php foreach ($mainSection['movies'] as $movie): ?>
-          <?php include 'partials/movie-card.php'; ?>
+          <?php include __DIR__ . '/partials/movie-card.php'; ?>
         <?php endforeach; ?>
       </div>
       <button class="carousel-btn next" aria-label="Suivant">
@@ -171,7 +165,6 @@ include 'partials/navbar.php';
     <?php endif; ?>
   </section>
 
-
   <?php if (!empty($nowPlaying)): ?>
   <section class="section-cat" id="section-sorties">
     <div class="section-header">
@@ -180,14 +173,13 @@ include 'partials/navbar.php';
         <h2 class="section-title">Sorties récentes</h2>
         <p class="section-subtitle">Films actuellement en salle</p>
       </div>
-      <a href="/frontend/pages/movies.php" class="btn-more">
+      <a href="<?= $basePath ?>/pages/movies.php" class="btn-more">
         Voir plus
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <path d="M5 12h14M12 5l7 7-7 7"/>
         </svg>
       </a>
     </div>
-
     <div class="carousel-wrap">
       <button class="carousel-btn prev" aria-label="Précédent">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -196,7 +188,7 @@ include 'partials/navbar.php';
       </button>
       <div class="carousel-track">
         <?php foreach ($nowPlaying as $movie): ?>
-          <?php include 'partials/movie-card.php'; ?>
+          <?php include __DIR__ . '/partials/movie-card.php'; ?>
         <?php endforeach; ?>
       </div>
       <button class="carousel-btn next" aria-label="Suivant">
@@ -209,7 +201,6 @@ include 'partials/navbar.php';
   <?php endif; ?>
 
 </div>
-
 
 <div id="trailer-modal"
      style="display:none;position:fixed;inset:0;z-index:1000;
@@ -225,12 +216,11 @@ include 'partials/navbar.php';
   </div>
 </div>
 
+<?php include __DIR__ . '/partials/footer.php'; ?>
 
-<?php include 'partials/footer.php'; ?>
-
-<script src="/frontend/assets/js/components/loader.js"></script>
-<script src="/frontend/assets/js/components/navbar.js"></script>
-<script src="/frontend/assets/js/pages/home.js"></script>
+<script src="<?= $basePath ?>/assets/js/components/loader.js"></script>
+<script src="<?= $basePath ?>/assets/js/components/navbar.js"></script>
+<script src="<?= $basePath ?>/assets/js/pages/home.js"></script>
 
 </body>
 </html>

@@ -1,9 +1,10 @@
+<?php if (!isset($basePath)) {
+    $basePath = rtrim(str_replace('\\', '/', dirname(dirname($_SERVER['SCRIPT_NAME']))), '/');
+} ?>
 <footer class="footer">
   <div class="footer-inner">
 
-    <div class="footer-logo">
-      SUPINFO<span>.TV</span>
-    </div>
+    <div class="footer-logo">SUPINFO<span>.TV</span></div>
 
     <p class="footer-copy">
       &copy; <?= date('Y') ?> Supinfo.TV — Projet académique.
@@ -13,9 +14,9 @@
     </p>
 
     <div class="footer-links">
-      <a href="/frontend/pages/movies.php">Films</a>
-      <a href="/frontend/pages/search.php">Recherche</a>
-      <a href="/frontend/pages/login.php">Connexion</a>
+      <a href="<?= $basePath ?>/pages/movies.php">Films</a>
+      <a href="<?= $basePath ?>/pages/search.php">Recherche</a>
+      <a href="<?= $basePath ?>/pages/login.php">Connexion</a>
     </div>
 
   </div>
