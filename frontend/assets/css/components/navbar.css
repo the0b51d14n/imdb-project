@@ -1,0 +1,194 @@
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    height: var(--navbar-h);
+    display: flex;
+    align-items: center;
+    padding: 0 40px;
+    transition: background var(--transition), backdrop-filter var(--transition);
+}
+
+.navbar.scrolled {
+    background: rgba(13, 13, 13, 0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+}
+
+.navbar-inner {
+    width: 100%;
+    max-width: var(--container);
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 40px;
+}
+
+/* ── Logo ── */
+.navbar-logo {
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    flex-shrink: 0;
+    text-transform: uppercase;
+}
+
+.navbar-logo span {
+    color: var(--text-muted);
+}
+
+/* ── Liens ── */
+.navbar-links {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    flex: 1;
+}
+
+.navbar-links a {
+    font-size: 14px;
+    color: var(--text-muted);
+    transition: color var(--transition);
+    letter-spacing: 0.01em;
+    position: relative;
+}
+
+.navbar-links a:hover {
+    color: var(--text);
+}
+
+.navbar-links a.active {
+    color: var(--text);
+}
+
+.navbar-links a.active::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 2px;
+}
+
+/* ── Droite ── */
+.navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+}
+
+.navbar-search-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    transition: color var(--transition), background var(--transition);
+}
+
+.navbar-search-btn:hover {
+    color: var(--text);
+    background: var(--surface-2);
+}
+
+.navbar-cart {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    transition: color var(--transition), background var(--transition);
+}
+
+.navbar-cart:hover {
+    color: var(--text);
+    background: var(--surface-2);
+}
+
+.cart-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-nav-login {
+    padding: 7px 18px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    transition: all var(--transition);
+}
+
+.btn-nav-login:hover {
+    color: var(--text);
+    border-color: #444;
+}
+
+.btn-nav-register {
+    padding: 7px 18px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 500;
+    background: var(--accent);
+    color: #fff;
+    transition: background var(--transition);
+}
+
+.btn-nav-register:hover {
+    background: var(--accent-hover);
+}
+
+/* ── Hamburger mobile ── */
+.navbar-hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    padding: 4px;
+    margin-left: auto;
+}
+
+.navbar-hamburger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: var(--text);
+    border-radius: 2px;
+    transition: all var(--transition);
+}
+
+@media (max-width: 768px) {
+    .navbar {
+        padding: 0 16px;
+    }
+
+    .navbar-links {
+        display: none;
+    }
+
+    .navbar-hamburger {
+        display: flex;
+    }
+}
