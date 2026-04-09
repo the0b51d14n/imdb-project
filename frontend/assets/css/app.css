@@ -8,4 +8,6 @@
 @import 'components/loader.css';
 @import 'components/movie-card.css';
 @import 'components/buttons.css';
+@import 'components/logout-button.css';
+@import 'components/order-button.css';
 @import 'components/footer.css';

@@ -38,6 +38,8 @@ $cardNote  = $movie['note'] ?? null;
       <div class="movie-card-type">Série</div>
       <?php endif; ?>
 
+      <span class="movie-card-glow-bubble"></span>
+
       <div class="movie-card-overlay">
         <div class="movie-card-overlay-title"><?= htmlspecialchars($movie['title']) ?></div>
         <div class="movie-card-overlay-btn">

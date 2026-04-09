@@ -49,3 +49,21 @@ function closeTrailer() {
 document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') closeTrailer();
 });
+
+(function applyHeroStripes() {
+    var selectors = ['.btn-primary', '.btn-ghost', '.btn-more'];
+    selectors.forEach(function (sel) {
+        document.querySelectorAll(sel).forEach(function (el) {
+            if (el.querySelector('.nfx-stripe')) return;
+            var count = 40;
+            var step = Math.max(2, Math.floor((el.offsetWidth || 180) / count));
+            for (var i = 0; i < count; i++) {
+                var s = document.createElement('span');
+                s.classList.add('nfx-stripe');
+                s.style.left = (i * step) + 'px';
+                s.style.transitionDelay = (Math.random() * 0.4) + 's';
+                el.appendChild(s);
+            }
+        });
+    });
+})();

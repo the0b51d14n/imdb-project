@@ -3,16 +3,67 @@
     width: 180px;
     flex-shrink: 0;
     border-radius: var(--radius);
-    overflow: hidden;
+    overflow: visible;
     background: var(--surface);
     border: 1px solid var(--border);
     transition: transform var(--transition), border-color var(--transition);
     cursor: pointer;
 }
 
+.movie-card::before,
+.movie-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 20%;
+    width: 50%;
+    height: 100%;
+    border-radius: var(--radius);
+    transform: skewX(8deg);
+    transition: transform 0.5s, left 0.5s, width 0.5s, opacity 0.5s;
+    pointer-events: none;
+    z-index: -1;
+    opacity: 0;
+}
+
+.movie-card::after {
+    filter: blur(20px);
+}
+
+.movie-card:nth-child(3n+1)::before,
+.movie-card:nth-child(3n+1)::after {
+    background: linear-gradient(315deg, var(--accent), #ff8c42);
+}
+
+.movie-card:nth-child(3n+2)::before,
+.movie-card:nth-child(3n+2)::after {
+    background: linear-gradient(315deg, var(--gold), var(--accent));
+}
+
+.movie-card:nth-child(3n)::before,
+.movie-card:nth-child(3n)::after {
+    background: linear-gradient(315deg, #ff6520, var(--gold));
+}
+
+.movie-card:hover::before,
+.movie-card:hover::after {
+    opacity: 1;
+    transform: skewX(0deg);
+    left: 8%;
+    width: calc(100% - 30px);
+}
+
+.movie-card-poster {
+    position: relative;
+    aspect-ratio: 2/3;
+    overflow: hidden;
+    background: var(--surface-2);
+    border-radius: calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0 0;
+}
+
 .movie-card:hover {
-    transform: translateY(-5px) scale(1.02);
-    border-color: #3a3a3a;
+    transform: translateY(-6px) scale(1.02);
+    border-color: rgba(232, 80, 10, 0.4);
 }
 
 .movie-card:hover .movie-card-overlay {
@@ -20,15 +71,7 @@
 }
 
 .movie-card:hover .movie-card-img {
-    transform: scale(1.05);
-}
-
-/* ── Poster ── */
-.movie-card-poster {
-    position: relative;
-    aspect-ratio: 2/3;
-    overflow: hidden;
-    background: var(--surface-2);
+    transform: scale(1.06);
 }
 
 .movie-card-img {
@@ -57,7 +100,61 @@
     text-transform: uppercase;
 }
 
-/* ── Badge note (style IMDB gold) ── */
+.movie-card-glow-bubble {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    pointer-events: none;
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.movie-card-glow-bubble::before,
+.movie-card-glow-bubble::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(8px);
+    opacity: 0;
+    transition: opacity 0.15s;
+    animation: card-bubble 2.5s ease-in-out infinite;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.movie-card:hover .movie-card-glow-bubble::before {
+    top: -40px;
+    left: 40px;
+    width: 80px;
+    height: 80px;
+    opacity: 1;
+}
+
+.movie-card:hover .movie-card-glow-bubble::after {
+    bottom: -40px;
+    right: 40px;
+    width: 70px;
+    height: 70px;
+    opacity: 1;
+    animation-delay: -1s;
+}
+
+@keyframes card-bubble {
+
+    0%,
+    100% {
+        transform: translateY(8px);
+    }
+
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
 .movie-card-badge {
     position: absolute;
     top: 8px;
@@ -73,9 +170,9 @@
     font-weight: 500;
     color: var(--gold);
     backdrop-filter: blur(4px);
+    z-index: 3;
 }
 
-/* ── Badge Série ── */
 .movie-card-type {
     position: absolute;
     top: 8px;
@@ -89,9 +186,9 @@
     letter-spacing: 0.05em;
     text-transform: uppercase;
     color: var(--text-muted);
+    z-index: 3;
 }
 
-/* ── Overlay hover ── */
 .movie-card-overlay {
     position: absolute;
     inset: 0;
@@ -106,6 +203,7 @@
     justify-content: flex-end;
     padding: 14px;
     gap: 8px;
+    z-index: 3;
 }
 
 .movie-card-overlay-title {
@@ -116,6 +214,7 @@
 }
 
 .movie-card-overlay-btn {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -126,16 +225,48 @@
     color: #fff;
     font-size: 12px;
     font-weight: 500;
-    transition: background var(--transition);
+    overflow: hidden;
+    transition: filter 0.3s, letter-spacing 0.3s;
+}
+
+.movie-card-overlay-btn span.nfx-stripe {
+    position: absolute;
+    top: 0;
+    width: 2px;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    pointer-events: none;
+    z-index: 0;
+    transform: scaleY(0);
+    transform-origin: bottom;
+    transition: transform 0.2s ease-in-out;
+}
+
+.movie-card:hover .movie-card-overlay-btn span.nfx-stripe {
+    transform: scaleY(1);
+    transform-origin: top;
+}
+
+.movie-card:hover .movie-card-overlay-btn span.nfx-stripe:nth-child(even) {
+    transform-origin: bottom;
+}
+
+.movie-card-overlay-btn>*:not(.nfx-stripe) {
+    position: relative;
+    z-index: 1;
 }
 
 .movie-card-overlay-btn:hover {
-    background: var(--accent-hover);
+    filter: drop-shadow(0 0 6px var(--accent));
+    letter-spacing: 0.04em;
 }
 
-/* ── Infos bas ── */
 .movie-card-info {
     padding: 10px 12px 12px;
+    background: var(--surface);
+    border-radius: 0 0 calc(var(--radius) - 1px) calc(var(--radius) - 1px);
+    position: relative;
+    z-index: 1;
 }
 
 .movie-card-title {

@@ -1,3 +1,9 @@
+/* ─────────────────────────────────────────────
+   LOADER — Supinfo.TV
+   Intègre : Loading Animation (shapes SVG)
+   + barre de progression originale conservée
+───────────────────────────────────────────── */
+
 .page-loader {
     position: fixed;
     inset: 0;
@@ -7,8 +13,8 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 16px;
-    transition: opacity 0.4s ease, visibility 0.4s ease;
+    gap: 28px;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
 }
 
 .page-loader.hidden {
@@ -17,16 +23,113 @@
     pointer-events: none;
 }
 
+/* ── Logo image centré ── */
 .loader-logo {
-    font-size: 28px;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
+.loader-logo img {
+    height: 48px;
+    width: auto;
+    opacity: 0.9;
+    animation: loader-logo-pulse 2s ease-in-out infinite;
+}
+
+@keyframes loader-logo-pulse {
+
+    0%,
+    100% {
+        opacity: 0.9;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.6;
+        transform: scale(0.97);
+    }
+}
+
+/* ── Shapes SVG row ── */
+.loader-shapes {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+}
+
+/* Reprise exacte du style "Loading Animation" adapté aux couleurs du site */
+.loader-shape {
+    --path: var(--border);
+    --dot: var(--accent);
+    --duration: 3s;
+    width: 36px;
+    height: 36px;
+    position: relative;
+}
+
+.loader-shape::before {
+    content: "";
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    position: absolute;
+    display: block;
+    background: var(--dot);
+    top: 30px;
+    left: 15px;
+    transform: translate(-14px, -14px);
+    animation: dotRect var(--duration) cubic-bezier(0.785, 0.135, 0.15, 0.86) infinite;
+}
+
+.loader-shape svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.loader-shape svg rect,
+.loader-shape svg polygon,
+.loader-shape svg circle {
+    fill: none;
+    stroke: var(--path);
+    stroke-width: 10px;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+}
+
+.loader-shape svg polygon {
+    stroke-dasharray: 145 76 145 76;
+    stroke-dashoffset: 0;
+    animation: pathTriangle var(--duration) cubic-bezier(0.785, 0.135, 0.15, 0.86) infinite;
+}
+
+.loader-shape svg rect {
+    stroke-dasharray: 192 64 192 64;
+    stroke-dashoffset: 0;
+    animation: pathRect 3s cubic-bezier(0.785, 0.135, 0.15, 0.86) infinite;
+}
+
+.loader-shape svg circle {
+    stroke-dasharray: 150 50 150 50;
+    stroke-dashoffset: 75;
+    animation: pathCircle var(--duration) cubic-bezier(0.785, 0.135, 0.15, 0.86) infinite;
+}
+
+.loader-shape.triangle {
+    width: 40px;
+}
+
+.loader-shape.triangle::before {
+    left: 17px;
+    transform: translate(-8px, -14px);
+    animation: dotTriangle var(--duration) cubic-bezier(0.785, 0.135, 0.15, 0.86) infinite;
+}
+
+/* ── Barre de progression ── */
 .loader-bar {
-    width: 100px;
+    width: 120px;
     height: 2px;
     background: var(--surface-2);
     border-radius: 2px;
@@ -46,5 +149,88 @@
 
     to {
         width: 100%;
+    }
+}
+
+/* ── Keyframes shapes ── */
+@keyframes pathTriangle {
+    33% {
+        stroke-dashoffset: 74;
+    }
+
+    66% {
+        stroke-dashoffset: 147;
+    }
+
+    100% {
+        stroke-dashoffset: 221;
+    }
+}
+
+@keyframes dotTriangle {
+    33% {
+        transform: translate(0, 0);
+    }
+
+    66% {
+        transform: translate(8px, -14px);
+    }
+
+    100% {
+        transform: translate(-8px, -14px);
+    }
+}
+
+@keyframes pathRect {
+    25% {
+        stroke-dashoffset: 64;
+    }
+
+    50% {
+        stroke-dashoffset: 128;
+    }
+
+    75% {
+        stroke-dashoffset: 192;
+    }
+
+    100% {
+        stroke-dashoffset: 256;
+    }
+}
+
+@keyframes dotRect {
+    25% {
+        transform: translate(0, 0);
+    }
+
+    50% {
+        transform: translate(14px, -14px);
+    }
+
+    75% {
+        transform: translate(0, -28px);
+    }
+
+    100% {
+        transform: translate(-14px, -14px);
+    }
+}
+
+@keyframes pathCircle {
+    25% {
+        stroke-dashoffset: 125;
+    }
+
+    50% {
+        stroke-dashoffset: 175;
+    }
+
+    75% {
+        stroke-dashoffset: 225;
+    }
+
+    100% {
+        stroke-dashoffset: 275;
     }
 }

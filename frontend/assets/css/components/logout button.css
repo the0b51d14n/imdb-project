@@ -1,0 +1,188 @@
+.logout-btn-animated {
+    --figure-duration: 100ms;
+    --transform-figure: none;
+    --walking-duration: 100ms;
+    --transform-arm1: none;
+    --transform-wrist1: none;
+    --transform-arm2: none;
+    --transform-wrist2: none;
+    --transform-leg1: none;
+    --transform-calf1: none;
+    --transform-leg2: none;
+    --transform-calf2: none;
+
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 400;
+    height: 36px;
+    outline: none;
+    padding: 0 14px 0 10px;
+    perspective: 100px;
+    position: relative;
+    border-radius: var(--radius);
+    width: 148px;
+    -webkit-tap-highlight-color: transparent;
+    transition: border-color var(--transition), color var(--transition);
+    overflow: hidden;
+}
+
+.logout-btn-animated::before {
+    background-color: var(--surface-2);
+    border-radius: var(--radius);
+    content: "";
+    display: block;
+    height: 100%;
+    left: 0;
+    position: absolute;
+    top: 0;
+    transform: none;
+    transition: transform 50ms ease;
+    width: 100%;
+    z-index: 2;
+}
+
+.logout-btn-animated:hover {
+    border-color: #444;
+    color: var(--text);
+}
+
+.logout-btn-animated:hover .logout-door {
+    transform: rotateY(20deg);
+}
+
+.logout-btn-animated:active::before {
+    transform: scale(0.96);
+}
+
+.logout-btn-animated:active .logout-door {
+    transform: rotateY(28deg);
+}
+
+.logout-btn-animated.clicked::before {
+    transform: none;
+}
+
+.logout-btn-animated.clicked .logout-door {
+    transform: rotateY(35deg);
+}
+
+.logout-btn-animated.door-slammed .logout-door {
+    transform: none;
+    transition: transform 100ms ease-in 250ms;
+}
+
+.logout-btn-animated.falling {
+    animation: logout-shake 200ms linear;
+}
+
+.logout-btn-animated.falling .logout-bang {
+    animation: logout-flash 300ms linear;
+}
+
+.logout-btn-animated.falling .logout-figure {
+    animation: logout-spin 1000ms infinite linear;
+    bottom: -200px;
+    opacity: 0;
+    right: 1px;
+    transition:
+        transform calc(var(--figure-duration)) linear,
+        bottom calc(var(--figure-duration)) cubic-bezier(0.7, 0.1, 1, 1) 100ms,
+        opacity calc(calc(var(--figure-duration) * 0.25)) linear calc(calc(var(--figure-duration) * 0.75));
+    z-index: 1;
+}
+
+.logout-figure,
+.logout-door,
+.logout-doorway {
+    display: block;
+    position: absolute;
+}
+
+.logout-figure {
+    bottom: 3px;
+    fill: var(--accent);
+    right: 14px;
+    transform: var(--transform-figure);
+    transition: transform calc(var(--figure-duration)) cubic-bezier(0.2, 0.1, 0.8, 0.9);
+    width: 22px;
+    z-index: 4;
+}
+
+.logout-door,
+.logout-doorway {
+    bottom: 3px;
+    fill: var(--surface-2);
+    right: 9px;
+    width: 24px;
+}
+
+.logout-door {
+    transform: rotateY(0deg);
+    transform-origin: 100% 50%;
+    transform-style: preserve-3d;
+    transition: transform 200ms ease;
+    z-index: 5;
+}
+
+.logout-door path {
+    fill: var(--accent);
+    stroke: var(--accent);
+    stroke-width: 4;
+}
+
+.logout-doorway {
+    z-index: 3;
+}
+
+.logout-bang {
+    opacity: 0;
+    fill: var(--gold);
+}
+
+.logout-text {
+    color: var(--text-muted);
+    font-weight: 400;
+    position: relative;
+    z-index: 10;
+    transition: color var(--transition);
+}
+
+.logout-btn-animated:hover .logout-text {
+    color: var(--text);
+}
+
+.logout-arm1, .logout-wrist1, .logout-arm2, .logout-wrist2,
+.logout-leg1, .logout-calf1, .logout-leg2, .logout-calf2 {
+    transition: transform calc(var(--walking-duration)) ease-in-out;
+}
+
+.logout-arm1   { transform: var(--transform-arm1);  transform-origin: 52% 45%; }
+.logout-wrist1 { transform: var(--transform-wrist1); transform-origin: 59% 55%; }
+.logout-arm2   { transform: var(--transform-arm2);  transform-origin: 47% 43%; }
+.logout-wrist2 { transform: var(--transform-wrist2); transform-origin: 35% 47%; }
+.logout-leg1   { transform: var(--transform-leg1);  transform-origin: 47% 64.5%; }
+.logout-calf1  { transform: var(--transform-calf1); transform-origin: 55.5% 71.5%; }
+.logout-leg2   { transform: var(--transform-leg2);  transform-origin: 43% 63%; }
+.logout-calf2  { transform: var(--transform-calf2); transform-origin: 41.5% 73%; }
+
+@keyframes logout-spin {
+    from { transform: rotate(0deg) scale(0.94); }
+    to   { transform: rotate(359deg) scale(0.94); }
+}
+
+@keyframes logout-shake {
+    0%   { transform: rotate(-1deg); }
+    50%  { transform: rotate(2deg); }
+    100% { transform: rotate(-1deg); }
+}
+
+@keyframes logout-flash {
+    0%   { opacity: 0.4; }
+    100% { opacity: 0; }
+}
