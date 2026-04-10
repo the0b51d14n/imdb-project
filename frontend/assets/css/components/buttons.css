@@ -60,7 +60,7 @@
 
 .btn-primary span.nfx-stripe,
 .btn-nav-register span.nfx-stripe {
-    background: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.18);
 }
 
 .btn-ghost span.nfx-stripe,
@@ -85,7 +85,7 @@
 }
 
 .btn-primary:hover {
-    filter: drop-shadow(0 0 10px var(--accent)) drop-shadow(0 0 30px var(--accent));
+    filter: drop-shadow(0 0 10px var(--accent)) drop-shadow(0 0 28px rgba(128, 14, 19, 0.6));
     letter-spacing: 0.1em;
     color: #fff;
     transform: translateY(-1px);
@@ -97,7 +97,7 @@
     gap: 8px;
     padding: 12px 26px;
     border-radius: var(--radius);
-    background: rgba(240, 236, 228, 0.08);
+    background: rgba(245, 237, 232, 0.06);
     color: var(--text);
     font-size: 14px;
     font-weight: 400;
@@ -108,9 +108,9 @@
 }
 
 .btn-ghost:hover {
-    filter: drop-shadow(0 0 10px var(--accent)) drop-shadow(0 0 30px var(--accent));
+    filter: drop-shadow(0 0 10px var(--accent)) drop-shadow(0 0 28px rgba(128, 14, 19, 0.5));
     letter-spacing: 0.1em;
-    background: rgba(240, 236, 228, 0.13);
+    background: rgba(245, 237, 232, 0.10);
     border-color: var(--accent);
     color: #fff;
 }
@@ -131,7 +131,7 @@
 }
 
 .btn-more:hover {
-    filter: drop-shadow(0 0 10px var(--accent)) drop-shadow(0 0 30px var(--accent));
+    filter: drop-shadow(0 0 10px var(--accent)) drop-shadow(0 0 28px rgba(128, 14, 19, 0.5));
     letter-spacing: 0.1em;
     color: #fff;
     border-color: var(--accent);

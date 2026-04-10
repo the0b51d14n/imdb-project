@@ -1,9 +1,3 @@
-/* ─────────────────────────────────────────────
-   LOADER — Supinfo.TV
-   Intègre : Loading Animation (shapes SVG)
-   + barre de progression originale conservée
-───────────────────────────────────────────── */
-
 .page-loader {
     position: fixed;
     inset: 0;
@@ -23,7 +17,6 @@
     pointer-events: none;
 }
 
-/* ── Logo image centré ── */
 .loader-logo {
     display: flex;
     align-items: center;
@@ -46,12 +39,11 @@
     }
 
     50% {
-        opacity: 0.6;
+        opacity: 0.55;
         transform: scale(0.97);
     }
 }
 
-/* ── Shapes SVG row ── */
 .loader-shapes {
     display: flex;
     align-items: center;
@@ -59,7 +51,6 @@
     gap: 20px;
 }
 
-/* Reprise exacte du style "Loading Animation" adapté aux couleurs du site */
 .loader-shape {
     --path: var(--border);
     --dot: var(--accent);
@@ -77,6 +68,7 @@
     position: absolute;
     display: block;
     background: var(--dot);
+    box-shadow: 0 0 6px var(--accent);
     top: 30px;
     left: 15px;
     transform: translate(-14px, -14px);
@@ -127,7 +119,6 @@
     animation: dotTriangle var(--duration) cubic-bezier(0.785, 0.135, 0.15, 0.86) infinite;
 }
 
-/* ── Barre de progression ── */
 .loader-bar {
     width: 120px;
     height: 2px;
@@ -138,7 +129,7 @@
 
 .loader-bar-inner {
     height: 100%;
-    background: var(--accent);
+    background: linear-gradient(to right, var(--cherry), var(--accent));
     animation: loader-fill 1s ease-out forwards;
 }
 
@@ -152,7 +143,6 @@
     }
 }
 
-/* ── Keyframes shapes ── */
 @keyframes pathTriangle {
     33% {
         stroke-dashoffset: 74;
