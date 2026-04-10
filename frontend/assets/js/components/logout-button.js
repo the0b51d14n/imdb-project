@@ -1,5 +1,7 @@
 (function () {
-    const logoutBtnStates = {
+    'use strict';
+
+    const STATES = {
         default: {
             '--figure-duration': '100ms',
             '--transform-figure': 'none',
@@ -84,62 +86,59 @@
         },
     };
 
-    const updateState = (btn, state) => {
-        if (!logoutBtnStates[state]) return;
-        btn._logoutState = state;
-        for (const [k, v] of Object.entries(logoutBtnStates[state])) {
-            btn.style.setProperty(k, v);
+    const applyState = (btn, name) => {
+        if (!STATES[name]) return;
+        btn._logoutState = name;
+        for (const [prop, val] of Object.entries(STATES[name])) {
+            btn.style.setProperty(prop, val);
         }
     };
 
-    const getDuration = (state, key) => {
-        const val = logoutBtnStates[state]?.[key] || '100ms';
-        return parseInt(val, 10);
-    };
+    const ms = (name, key) => parseInt(STATES[name]?.[key] ?? '100ms', 10);
 
-    document.querySelectorAll('.logout-btn-animated').forEach(btn => {
+    document.querySelectorAll('.logout-btn-animated').forEach((btn) => {
         btn._logoutState = 'default';
 
         btn.addEventListener('mouseenter', () => {
-            if (btn._logoutState === 'default') updateState(btn, 'hover');
+            if (btn._logoutState === 'default') applyState(btn, 'hover');
         });
 
         btn.addEventListener('mouseleave', () => {
-            if (btn._logoutState === 'hover') updateState(btn, 'default');
+            if (btn._logoutState === 'hover') applyState(btn, 'default');
         });
 
         btn.addEventListener('click', (e) => {
             e.preventDefault();
-            const href = btn.getAttribute('onclick') ? null : btn.dataset.href;
+            const href = btn.dataset.href || null;
+            if (btn._logoutState !== 'default' && btn._logoutState !== 'hover') return;
 
-            if (btn._logoutState === 'default' || btn._logoutState === 'hover') {
-                btn.classList.add('clicked');
-                updateState(btn, 'walking1');
+            btn.classList.add('clicked');
+            applyState(btn, 'walking1');
+
+            setTimeout(() => {
+                btn.classList.add('door-slammed');
+                applyState(btn, 'walking2');
 
                 setTimeout(() => {
-                    btn.classList.add('door-slammed');
-                    updateState(btn, 'walking2');
+                    btn.classList.add('falling');
+                    applyState(btn, 'falling1');
 
                     setTimeout(() => {
-                        btn.classList.add('falling');
-                        updateState(btn, 'falling1');
+                        applyState(btn, 'falling2');
 
                         setTimeout(() => {
-                            updateState(btn, 'falling2');
+                            applyState(btn, 'falling3');
 
                             setTimeout(() => {
-                                updateState(btn, 'falling3');
-
-                                setTimeout(() => {
-                                    btn.classList.remove('clicked', 'door-slammed', 'falling');
-                                    updateState(btn, 'default');
-                                    if (href) window.location.href = href;
-                                }, getDuration('falling3', '--walking-duration'));
-                            }, getDuration('falling2', '--walking-duration'));
-                        }, getDuration('falling1', '--walking-duration'));
-                    }, getDuration('walking2', '--figure-duration'));
-                }, getDuration('walking1', '--figure-duration'));
-            }
+                                btn.classList.remove('clicked', 'door-slammed', 'falling');
+                                applyState(btn, 'default');
+                                if (href) window.location.href = href;
+                            }, ms('falling3', '--walking-duration'));
+                        }, ms('falling2', '--walking-duration'));
+                    }, ms('falling1', '--walking-duration'));
+                }, ms('walking2', '--figure-duration'));
+            }, ms('walking1', '--figure-duration'));
         });
     });
+
 })();

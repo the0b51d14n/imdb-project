@@ -1,8 +1,12 @@
+/* ═══════════════════════════════════════════════════════════════
+   HOME PAGE
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Hero ────────────────────────────────────────────────────── */
 .hero {
     position: relative;
     height: 100vh;
     min-height: 600px;
-    max-height: none;
     display: flex;
     align-items: flex-end;
     overflow: hidden;
@@ -46,12 +50,11 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse at center,
-            transparent 40%,
-            rgba(100, 13, 20, 0.35) 100%);
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(100, 13, 20, 0.35) 100%);
     pointer-events: none;
 }
 
+/* ── Hero content ────────────────────────────────────────────── */
 .hero-content {
     position: relative;
     z-index: 2;
@@ -234,6 +237,7 @@
     font-size: 12px;
 }
 
+/* ── Scroll hint ─────────────────────────────────────────────── */
 .hero-scroll-hint {
     position: absolute;
     bottom: 28px;
@@ -276,6 +280,7 @@
     }
 }
 
+/* ── Sections ────────────────────────────────────────────────── */
 .home-sections {
     padding: 52px 0 80px;
 }
@@ -318,6 +323,7 @@
     margin-top: 3px;
 }
 
+/* ── Carousel ────────────────────────────────────────────────── */
 .carousel-wrap {
     position: relative;
 }
@@ -383,6 +389,7 @@
     pointer-events: none;
 }
 
+/* ── Trailer modal ───────────────────────────────────────────── */
 .trailer-modal-inner {
     position: relative;
     width: min(880px, 92vw);
@@ -416,7 +423,7 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: background var(--transition);
+    transition: background var(--transition), border-color var(--transition);
 }
 
 .trailer-close:hover {
@@ -427,7 +434,7 @@
 .trailer-embed {
     border-radius: var(--radius);
     overflow: hidden;
-    aspect-ratio: 16/9;
+    aspect-ratio: 16 / 9;
     background: #000;
 }
 
@@ -437,9 +444,9 @@
     border: none;
 }
 
+/* ── Responsive ──────────────────────────────────────────────── */
 @media (max-width: 768px) {
     .hero {
-        height: 100vh;
         min-height: 580px;
     }
 

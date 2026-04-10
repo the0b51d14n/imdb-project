@@ -1,3 +1,6 @@
+/* ═══════════════════════════════════════════════════════════════
+   PAGE LOADER
+═══════════════════════════════════════════════════════════════ */
 .page-loader {
     position: fixed;
     inset: 0;
@@ -17,6 +20,7 @@
     pointer-events: none;
 }
 
+/* ── Logo ────────────────────────────────────────────────────── */
 .loader-logo {
     display: flex;
     align-items: center;
@@ -44,6 +48,7 @@
     }
 }
 
+/* ── Shapes ──────────────────────────────────────────────────── */
 .loader-shapes {
     display: flex;
     align-items: center;
@@ -100,7 +105,7 @@
 .loader-shape svg rect {
     stroke-dasharray: 192 64 192 64;
     stroke-dashoffset: 0;
-    animation: pathRect 3s cubic-bezier(0.785, 0.135, 0.15, 0.86) infinite;
+    animation: pathRect var(--duration) cubic-bezier(0.785, 0.135, 0.15, 0.86) infinite;
 }
 
 .loader-shape svg circle {
@@ -119,6 +124,7 @@
     animation: dotTriangle var(--duration) cubic-bezier(0.785, 0.135, 0.15, 0.86) infinite;
 }
 
+/* ── Progress bar ────────────────────────────────────────────── */
 .loader-bar {
     width: 120px;
     height: 2px;
@@ -143,6 +149,7 @@
     }
 }
 
+/* ── Shape animations ────────────────────────────────────────── */
 @keyframes pathTriangle {
     33% {
         stroke-dashoffset: 74;

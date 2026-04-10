@@ -1,3 +1,6 @@
+/* ═══════════════════════════════════════════════════════════════
+   RESET
+═══════════════════════════════════════════════════════════════ */
 *,
 *::before,
 *::after {
@@ -49,4 +52,11 @@ input,
 textarea,
 select {
     font-family: inherit;
+}
+
+/* Accessible focus ring — visible only on keyboard navigation */
+:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 4px;
 }

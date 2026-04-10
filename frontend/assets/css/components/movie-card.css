@@ -1,3 +1,6 @@
+/* ═══════════════════════════════════════════════════════════════
+   MOVIE CARD
+═══════════════════════════════════════════════════════════════ */
 .movie-card {
     position: relative;
     width: 180px;
@@ -10,6 +13,7 @@
     cursor: pointer;
 }
 
+/* ── Glow shadow (nth-child colour cycling) ──────────────────── */
 .movie-card::before,
 .movie-card::after {
     content: '';
@@ -53,9 +57,10 @@
     width: calc(100% - 30px);
 }
 
+/* ── Poster ──────────────────────────────────────────────────── */
 .movie-card-poster {
     position: relative;
-    aspect-ratio: 2/3;
+    aspect-ratio: 2 / 3;
     overflow: hidden;
     background: var(--surface-2);
     border-radius: calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0 0;
@@ -100,13 +105,11 @@
     text-transform: uppercase;
 }
 
+/* ── Glow bubble (decorative) ────────────────────────────────── */
 .movie-card-glow-bubble {
     display: block;
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     z-index: 2;
     pointer-events: none;
     border-radius: var(--radius);
@@ -155,6 +158,7 @@
     }
 }
 
+/* ── Badges ──────────────────────────────────────────────────── */
 .movie-card-badge {
     position: absolute;
     top: 8px;
@@ -189,6 +193,7 @@
     z-index: 3;
 }
 
+/* ── Overlay ─────────────────────────────────────────────────── */
 .movie-card-overlay {
     position: absolute;
     inset: 0;
@@ -226,9 +231,10 @@
     font-size: 12px;
     font-weight: 500;
     overflow: hidden;
-    transition: filter 0.3s, letter-spacing 0.3s;
+    transition: filter var(--transition-slow), letter-spacing var(--transition-slow);
 }
 
+/* Stripe injection via JS */
 .movie-card-overlay-btn span.nfx-stripe {
     position: absolute;
     top: 0;
@@ -268,6 +274,7 @@
     letter-spacing: 0.04em;
 }
 
+/* ── Info strip ──────────────────────────────────────────────── */
 .movie-card-info {
     padding: 10px 12px 12px;
     background: var(--surface);

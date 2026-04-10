@@ -1,3 +1,8 @@
+/* ═══════════════════════════════════════════════════════════════
+   BUTTONS — shared styles & Netflix stripe effect
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Stripe overlay (injected by navbar.js) ──────────────────── */
 .btn-primary,
 .btn-ghost,
 .btn-more,
@@ -22,6 +27,7 @@
     transform-origin: bottom;
 }
 
+/* Alternate stripe origins for ripple effect */
 .btn-primary span.nfx-stripe:nth-child(even),
 .btn-ghost span.nfx-stripe:nth-child(even),
 .btn-more span.nfx-stripe:nth-child(even),
@@ -50,6 +56,7 @@
     transform-origin: bottom;
 }
 
+/* Keep text above stripes */
 .btn-primary>*:not(.nfx-stripe),
 .btn-ghost>*:not(.nfx-stripe),
 .btn-more>*:not(.nfx-stripe),
@@ -58,6 +65,7 @@
     z-index: 1;
 }
 
+/* Stripe colours */
 .btn-primary span.nfx-stripe,
 .btn-nav-register span.nfx-stripe {
     background: rgba(255, 255, 255, 0.18);
@@ -68,6 +76,7 @@
     background: var(--accent);
 }
 
+/* ── btn-primary ─────────────────────────────────────────────── */
 .btn-primary {
     display: inline-flex;
     align-items: center;
@@ -79,7 +88,7 @@
     font-size: 14px;
     font-weight: 500;
     border: none;
-    transition: filter 0.5s, letter-spacing 0.5s, transform var(--transition);
+    transition: filter var(--transition-slow), letter-spacing var(--transition-slow), transform var(--transition);
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
@@ -91,6 +100,7 @@
     transform: translateY(-1px);
 }
 
+/* ── btn-ghost ───────────────────────────────────────────────── */
 .btn-ghost {
     display: inline-flex;
     align-items: center;
@@ -102,7 +112,8 @@
     font-size: 14px;
     font-weight: 400;
     border: 1px solid var(--border);
-    transition: filter 0.5s, letter-spacing 0.5s, background var(--transition), border-color var(--transition);
+    transition: filter var(--transition-slow), letter-spacing var(--transition-slow),
+        background var(--transition), border-color var(--transition);
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
@@ -115,6 +126,7 @@
     color: #fff;
 }
 
+/* ── btn-more ────────────────────────────────────────────────── */
 .btn-more {
     display: inline-flex;
     align-items: center;
@@ -124,7 +136,8 @@
     padding: 7px 14px;
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    transition: filter 0.5s, letter-spacing 0.5s, color var(--transition), border-color var(--transition);
+    transition: filter var(--transition-slow), letter-spacing var(--transition-slow),
+        color var(--transition), border-color var(--transition);
     white-space: nowrap;
     text-transform: uppercase;
     letter-spacing: 0.05em;

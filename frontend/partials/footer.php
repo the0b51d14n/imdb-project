@@ -12,7 +12,7 @@ if (!isset($basePath)) {
     </a>
 
     <p class="footer-copy">
-      &copy; <?= date('Y') ?> Supinfo.TV — Projet académique.
+      &copy; <?= date('Y') ?> Supinfo.TV &mdash; Projet académique.
       Données fournies par
       <a href="https://www.themoviedb.org/" target="_blank" rel="noopener"
          style="color:var(--accent);text-decoration:underline;text-underline-offset:3px;">TMDB</a>.
@@ -27,6 +27,17 @@ if (!isset($basePath)) {
   </div>
 </footer>
 
+<?php
+/*
+ * Script loading order:
+ *  1. loader.js  — hides the page-loader on window load
+ *  2. navbar.js  — scroll behaviour, hamburger, GSAP indicator, Netflix stripes
+ *  3. logout-button.js — animated logout button state machine
+ *
+ * loader.js no longer duplicates navbar logic.
+ * navbar.js no longer duplicates stripe injection.
+ */
+?>
 <script src="<?= $basePath ?>/assets/js/components/loader.js"></script>
 <script src="<?= $basePath ?>/assets/js/components/navbar.js"></script>
 <script src="<?= $basePath ?>/assets/js/components/logout-button.js"></script>
