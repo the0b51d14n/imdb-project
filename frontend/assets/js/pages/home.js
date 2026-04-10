@@ -50,11 +50,6 @@ document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') closeTrailer();
 });
 
-/**
- * Injecte 120 spans dans chaque bouton, espacés de 2px,
- * avec un transitionDelay aléatoire entre 0 et 1s —
- * fidèle à l'effet Netflix de référence.
- */
 (function applyHeroStripes() {
     var selectors = ['.btn-primary', '.btn-ghost', '.btn-more'];
     selectors.forEach(function (sel) {

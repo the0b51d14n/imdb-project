@@ -144,15 +144,8 @@
 }
 
 @keyframes card-bubble {
-
-    0%,
-    100% {
-        transform: translateY(8px);
-    }
-
-    50% {
-        transform: translateY(-8px);
-    }
+    0%, 100% { transform: translateY(8px); }
+    50%       { transform: translateY(-8px); }
 }
 
 .movie-card-badge {
@@ -193,9 +186,9 @@
     position: absolute;
     inset: 0;
     background: linear-gradient(to top,
-            rgba(13, 13, 13, 0.95) 0%,
-            rgba(13, 13, 13, 0.5) 50%,
-            transparent 100%);
+        rgba(13, 13, 13, 0.95) 0%,
+        rgba(13, 13, 13, 0.5) 50%,
+        transparent 100%);
     opacity: 0;
     transition: opacity var(--transition);
     display: flex;
@@ -234,7 +227,7 @@
     top: 0;
     width: 2px;
     height: 100%;
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.25);
     pointer-events: none;
     z-index: 0;
     transform: scaleY(0);
@@ -242,8 +235,15 @@
     transition: transform 0.2s ease-in-out;
 }
 
+.movie-card-overlay-btn span.nfx-stripe:nth-child(even) {
+    transform-origin: top;
+}
+
 .movie-card:hover .movie-card-overlay-btn span.nfx-stripe {
     transform: scaleY(1);
+}
+
+.movie-card:hover .movie-card-overlay-btn span.nfx-stripe:nth-child(odd) {
     transform-origin: top;
 }
 
@@ -251,7 +251,7 @@
     transform-origin: bottom;
 }
 
-.movie-card-overlay-btn>*:not(.nfx-stripe) {
+.movie-card-overlay-btn > *:not(.nfx-stripe) {
     position: relative;
     z-index: 1;
 }
