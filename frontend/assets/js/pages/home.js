@@ -50,18 +50,21 @@ document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') closeTrailer();
 });
 
+/**
+ * Injecte 120 spans dans chaque bouton, espacés de 2px,
+ * avec un transitionDelay aléatoire entre 0 et 1s —
+ * fidèle à l'effet Netflix de référence.
+ */
 (function applyHeroStripes() {
     var selectors = ['.btn-primary', '.btn-ghost', '.btn-more'];
     selectors.forEach(function (sel) {
         document.querySelectorAll(sel).forEach(function (el) {
             if (el.querySelector('.nfx-stripe')) return;
-            var count = 40;
-            var step = Math.max(2, Math.floor((el.offsetWidth || 180) / count));
-            for (var i = 0; i < count; i++) {
+            for (var i = 0; i < 120; i++) {
                 var s = document.createElement('span');
                 s.classList.add('nfx-stripe');
-                s.style.left = (i * step) + 'px';
-                s.style.transitionDelay = (Math.random() * 0.4) + 's';
+                s.style.left = (i * 2) + 'px';
+                s.style.transitionDelay = Math.random() + 's';
                 el.appendChild(s);
             }
         });

@@ -1,6 +1,7 @@
 .btn-primary,
 .btn-ghost,
-.btn-more {
+.btn-more,
+.btn-nav-register {
     position: relative;
     overflow: hidden;
     cursor: pointer;
@@ -8,36 +9,63 @@
 
 .btn-primary span.nfx-stripe,
 .btn-ghost span.nfx-stripe,
-.btn-more span.nfx-stripe {
+.btn-more span.nfx-stripe,
+.btn-nav-register span.nfx-stripe {
     position: absolute;
     top: 0;
     width: 2px;
     height: 100%;
     pointer-events: none;
     transition: transform 0.2s ease-in-out;
-    z-index: 0;
+    z-index: -1;
     transform: scaleY(0);
     transform-origin: bottom;
 }
 
 .btn-primary:hover span.nfx-stripe,
 .btn-ghost:hover span.nfx-stripe,
-.btn-more:hover span.nfx-stripe {
+.btn-more:hover span.nfx-stripe,
+.btn-nav-register:hover span.nfx-stripe {
     transform: scaleY(1);
+    transform-origin: top;
+}
+
+.btn-primary span.nfx-stripe:nth-child(even),
+.btn-ghost span.nfx-stripe:nth-child(even),
+.btn-more span.nfx-stripe:nth-child(even),
+.btn-nav-register span.nfx-stripe:nth-child(even) {
     transform-origin: top;
 }
 
 .btn-primary:hover span.nfx-stripe:nth-child(even),
 .btn-ghost:hover span.nfx-stripe:nth-child(even),
-.btn-more:hover span.nfx-stripe:nth-child(even) {
+.btn-more:hover span.nfx-stripe:nth-child(even),
+.btn-nav-register:hover span.nfx-stripe:nth-child(even) {
     transform-origin: bottom;
 }
 
 .btn-primary>*:not(.nfx-stripe),
 .btn-ghost>*:not(.nfx-stripe),
-.btn-more>*:not(.nfx-stripe) {
+.btn-more>*:not(.nfx-stripe),
+.btn-nav-register>*:not(.nfx-stripe) {
     position: relative;
     z-index: 1;
+}
+
+.btn-primary span.nfx-stripe {
+    background: var(--accent);
+}
+
+.btn-ghost span.nfx-stripe {
+    background: var(--accent);
+}
+
+.btn-more span.nfx-stripe {
+    background: var(--accent);
+}
+
+.btn-nav-register span.nfx-stripe {
+    background: var(--accent);
 }
 
 .btn-primary {
@@ -51,16 +79,15 @@
     font-size: 14px;
     font-weight: 500;
     border: none;
-    transition: filter 0.3s, letter-spacing 0.3s, transform var(--transition);
-}
-
-.btn-primary span.nfx-stripe {
-    background: rgba(255, 255, 255, 0.2);
+    transition: filter 0.5s, letter-spacing 0.5s, transform var(--transition);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .btn-primary:hover {
-    filter: drop-shadow(0 0 8px var(--accent)) drop-shadow(0 0 20px var(--accent));
-    letter-spacing: 0.03em;
+    filter: drop-shadow(0 0 10px var(--accent)) drop-shadow(0 0 30px var(--accent));
+    letter-spacing: 0.1em;
+    color: #fff;
     transform: translateY(-1px);
 }
 
@@ -75,18 +102,17 @@
     font-size: 14px;
     font-weight: 400;
     border: 1px solid var(--border);
-    transition: filter 0.3s, letter-spacing 0.3s, background var(--transition), border-color var(--transition);
-}
-
-.btn-ghost span.nfx-stripe {
-    background: rgba(240, 236, 228, 0.12);
+    transition: filter 0.5s, letter-spacing 0.5s, background var(--transition), border-color var(--transition);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .btn-ghost:hover {
+    filter: drop-shadow(0 0 10px var(--accent)) drop-shadow(0 0 30px var(--accent));
+    letter-spacing: 0.1em;
     background: rgba(240, 236, 228, 0.13);
     border-color: #3a3a3a;
-    filter: drop-shadow(0 0 6px rgba(240, 236, 228, 0.15));
-    letter-spacing: 0.03em;
+    color: #fff;
 }
 
 .btn-more {
@@ -98,17 +124,15 @@
     padding: 7px 14px;
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    transition: filter 0.3s, letter-spacing 0.3s, color var(--transition), border-color var(--transition);
+    transition: filter 0.5s, letter-spacing 0.5s, color var(--transition), border-color var(--transition);
     white-space: nowrap;
-}
-
-.btn-more span.nfx-stripe {
-    background: rgba(245, 197, 24, 0.15);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .btn-more:hover {
-    color: var(--gold);
-    border-color: rgba(245, 197, 24, 0.3);
-    filter: drop-shadow(0 0 5px rgba(245, 197, 24, 0.2));
-    letter-spacing: 0.03em;
+    filter: drop-shadow(0 0 10px var(--accent)) drop-shadow(0 0 30px var(--accent));
+    letter-spacing: 0.1em;
+    color: #fff;
+    border-color: var(--accent);
 }

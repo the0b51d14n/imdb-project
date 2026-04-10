@@ -7,9 +7,15 @@
 $cardType  = $movie['type'] ?? 'movie';
 $cardPrice = $movie['price']['unit'] ?? null;
 $cardNote  = $movie['note'] ?? null;
+
+// basePath est calculé dans head.php — fallback de sécurité
+if (!isset($basePath)) {
+    $scriptDir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
+    $basePath  = str_ends_with($scriptDir, '/pages') ? dirname($scriptDir) : $scriptDir;
+}
 ?>
 <article class="movie-card">
-  <a href="/frontend/pages/movie-detail.php?id=<?= (int)$movie['id'] ?>&type=<?= htmlspecialchars($cardType) ?>">
+  <a href="<?= $basePath ?>/pages/movie-detail.php?id=<?= (int)$movie['id'] ?>&type=<?= htmlspecialchars($cardType) ?>">
 
     <div class="movie-card-poster">
       <?php if (!empty($movie['poster'])): ?>

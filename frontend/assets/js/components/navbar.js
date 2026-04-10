@@ -101,18 +101,19 @@
         });
     }
 
-
-    function applyNetflixStripes(selector, stripeCount = 40) {
+    /**
+     * Injecte 120 spans dans un bouton, chacun espacé de 2px,
+     * avec un transitionDelay aléatoire entre 0 et 1s —
+     * identique à l'effet Netflix de référence.
+     */
+    function applyNetflixStripes(selector) {
         document.querySelectorAll(selector).forEach(el => {
-            // Ne pas re-appliquer si déjà fait
             if (el.querySelector('.nfx-stripe')) return;
-            const width = el.offsetWidth || 200;
-            const step = Math.max(2, Math.floor(width / stripeCount));
-            for (let i = 0; i < stripeCount; i++) {
+            for (let i = 0; i < 120; i++) {
                 const s = document.createElement('span');
                 s.classList.add('nfx-stripe');
-                s.style.left = `${i * step}px`;
-                s.style.transitionDelay = `${Math.random() * 0.4}s`;
+                s.style.left = `${i * 2}px`;
+                s.style.transitionDelay = `${Math.random()}s`;
                 el.appendChild(s);
             }
         });
