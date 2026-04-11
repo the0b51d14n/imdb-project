@@ -76,8 +76,8 @@ if (!isset($basePath)) {
           <span class="logout-text">Déconnexion</span>
         </button>
       <?php else: ?>
-        <a href="<?= $basePath ?>/pages/login.php"    class="btn-nav-login">Connexion</a>
-        <a href="<?= $basePath ?>/pages/register.php" class="btn-nav-register" id="btn-register">
+        <a href="<?= $basePath ?>/pages/login.php" class="btn-nav-login">Connexion</a>
+        <a href="<?= $basePath ?>/pages/login.php?mode=register" class="btn-nav-register" id="btn-register">
           <strong>S'inscrire</strong>
         </a>
       <?php endif; ?>

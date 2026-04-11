@@ -22,22 +22,12 @@ if (!isset($basePath)) {
       <a href="<?= $basePath ?>/pages/movies.php">Films</a>
       <a href="<?= $basePath ?>/pages/search.php">Recherche</a>
       <a href="<?= $basePath ?>/pages/login.php">Connexion</a>
+      <a href="<?= $basePath ?>/pages/login.php?mode=register">S'inscrire</a>
     </div>
 
   </div>
 </footer>
 
-<?php
-/*
- * Script loading order:
- *  1. loader.js  — hides the page-loader on window load
- *  2. navbar.js  — scroll behaviour, hamburger, GSAP indicator, Netflix stripes
- *  3. logout-button.js — animated logout button state machine
- *
- * loader.js no longer duplicates navbar logic.
- * navbar.js no longer duplicates stripe injection.
- */
-?>
 <script src="<?= $basePath ?>/assets/js/components/loader.js"></script>
 <script src="<?= $basePath ?>/assets/js/components/navbar.js"></script>
 <script src="<?= $basePath ?>/assets/js/components/logout-button.js"></script>

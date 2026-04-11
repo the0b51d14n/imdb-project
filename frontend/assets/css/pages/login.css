@@ -1,8 +1,19 @@
+html,
+body {
+    overflow: hidden;
+    height: 100%;
+}
+
+main {
+    padding-top: 0 !important;
+    min-height: unset !important;
+}
+
 .auth-page {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
+    height: 100vh;
     padding: 20px;
     background:
         radial-gradient(ellipse 80% 60% at 20% 40%, rgba(34, 87, 122, 0.35) 0%, transparent 60%),
@@ -15,7 +26,6 @@
     width: 850px;
     height: 550px;
     background: var(--surface);
-    margin: 20px;
     border-radius: 30px;
     box-shadow:
         0 0 0 1px var(--border),
@@ -151,8 +161,6 @@
         filter var(--transition-slow),
         letter-spacing var(--transition-slow),
         transform var(--transition-snap);
-    position: relative;
-    overflow: hidden;
 }
 
 .auth-btn:hover {
@@ -211,7 +219,6 @@
     left: -250%;
     width: 300%;
     height: 100%;
-    /* Dégradé projet : deep → teal */
     background: linear-gradient(135deg, var(--deep) 0%, var(--teal) 60%, var(--accent) 100%);
     border-radius: 150px;
     z-index: 2;
@@ -316,6 +323,34 @@
     flex: 1;
     height: 1px;
     background: var(--border);
+}
+
+.auth-back {
+    position: fixed;
+    top: 20px;
+    left: 24px;
+    z-index: 10;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 7px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    transition:
+        color var(--transition),
+        border-color var(--transition),
+        background var(--transition),
+        transform var(--transition-snap);
+}
+
+.auth-back:hover {
+    color: var(--text);
+    border-color: var(--accent);
+    background: var(--accent-subtle);
+    transform: translateX(-2px);
 }
 
 @media screen and (max-width: 650px) {
