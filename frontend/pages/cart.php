@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-require_once __DIR__ . '/../../config/tmdb.php';
+require_once __DIR__ . '/../config/tmdb.php';
 
 if (!isset($_SESSION['cart'])) $_SESSION['cart'] = [];
 
@@ -71,9 +71,9 @@ $activePage = '';
 
 $basePath = rtrim(str_replace('\\', '/', dirname(dirname($_SERVER['SCRIPT_NAME']))), '/');
 
-include __DIR__ . '/../../partials/head.php';
-include __DIR__ . '/../../partials/loader.php';
-include __DIR__ . '/../../partials/navbar.php';
+include __DIR__ . '/../partials/head.php';
+include __DIR__ . '/../partials/loader.php';
+include __DIR__ . '/../partials/navbar.php';
 ?>
 
 <main>
@@ -249,7 +249,7 @@ include __DIR__ . '/../../partials/navbar.php';
 </div>
 </main>
 
-<?php include __DIR__ . '/../../partials/footer.php'; ?>
+<?php include __DIR__ . '/../partials/footer.php'; ?>
 <script src="<?= $basePath ?>/assets/js/components/order-button.js"></script>
 <script src="<?= $basePath ?>/assets/js/pages/cart.js"></script>
 </body>
