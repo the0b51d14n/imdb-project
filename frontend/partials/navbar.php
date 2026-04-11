@@ -8,7 +8,7 @@ if (!isset($basePath)) {
   <div class="navbar-inner">
 
     <a href="<?= $basePath ?>/index.php" class="navbar-logo">
-      <img src="<?= $basePath ?>/assets/images/brand/logo-blanc.png" alt="Supinfo.TV">
+      SUPINFO<span>.TV</span>
     </a>
 
     <div class="navbar-links" id="navbar-links">
