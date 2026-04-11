@@ -1,6 +1,3 @@
-/* ═══════════════════════════════════════════════════════════════
-   MOVIE CARD
-═══════════════════════════════════════════════════════════════ */
 .movie-card {
     position: relative;
     width: 180px;
@@ -9,55 +6,59 @@
     overflow: visible;
     background: var(--surface);
     border: 1px solid var(--border);
-    transition: transform var(--transition), border-color var(--transition);
+    transition:
+        transform var(--transition-slow),
+        border-color var(--transition),
+        box-shadow var(--transition-slow);
     cursor: pointer;
+    will-change: transform;
 }
 
-/* ── Glow shadow (nth-child colour cycling) ──────────────────── */
 .movie-card::before,
 .movie-card::after {
     content: '';
     position: absolute;
-    top: 0;
-    left: 20%;
-    width: 50%;
+    top: 4px;
+    left: 10%;
+    width: 80%;
     height: 100%;
     border-radius: var(--radius);
-    transform: skewX(8deg);
-    transition: transform 0.5s, left 0.5s, width 0.5s, opacity 0.5s;
+    background: linear-gradient(160deg, var(--accent) 0%, var(--deep) 60%, var(--teal) 100%);
+    transform: skewX(4deg) translateY(4px);
+    transition:
+        opacity var(--transition-slow),
+        transform var(--transition-slow),
+        filter var(--transition-slow);
     pointer-events: none;
     z-index: -1;
     opacity: 0;
 }
 
 .movie-card::after {
-    filter: blur(20px);
+    filter: blur(18px);
+    opacity: 0;
 }
 
-.movie-card:nth-child(3n+1)::before,
-.movie-card:nth-child(3n+1)::after {
-    background: linear-gradient(315deg, var(--accent), var(--wine));
+.movie-card::before {
+    filter: blur(6px);
 }
 
-.movie-card:nth-child(3n+2)::before,
-.movie-card:nth-child(3n+2)::after {
-    background: linear-gradient(315deg, var(--gold), var(--accent));
+.movie-card:hover::before {
+    opacity: 0.55;
+    transform: skewX(0deg) translateY(6px) scaleX(0.95);
 }
 
-.movie-card:nth-child(3n)::before,
-.movie-card:nth-child(3n)::after {
-    background: linear-gradient(315deg, var(--cherry), var(--gold));
-}
-
-.movie-card:hover::before,
 .movie-card:hover::after {
-    opacity: 1;
-    transform: skewX(0deg);
-    left: 8%;
-    width: calc(100% - 30px);
+    opacity: 0.35;
+    transform: skewX(0deg) translateY(8px) scaleX(0.9);
 }
 
-/* ── Poster ──────────────────────────────────────────────────── */
+.movie-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    border-color: var(--border-bright);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--accent-glow);
+}
+
 .movie-card-poster {
     position: relative;
     aspect-ratio: 2 / 3;
@@ -66,24 +67,19 @@
     border-radius: calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0 0;
 }
 
-.movie-card:hover {
-    transform: translateY(-6px) scale(1.02);
-    border-color: rgba(173, 40, 49, 0.45);
-}
-
-.movie-card:hover .movie-card-overlay {
-    opacity: 1;
-}
-
-.movie-card:hover .movie-card-img {
-    transform: scale(1.06);
-}
-
 .movie-card-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.4s ease;
+    transition: transform 0.5s var(--ease-out-expo);
+}
+
+.movie-card:hover .movie-card-img {
+    transform: scale(1.08);
+}
+
+.movie-card:hover .movie-card-overlay {
+    opacity: 1;
 }
 
 .movie-card-placeholder {
@@ -100,12 +96,11 @@
 
 .movie-card-placeholder span {
     font-size: 11px;
-    color: var(--text-muted);
-    letter-spacing: 0.06em;
+    color: var(--text-faint);
+    letter-spacing: 0.08em;
     text-transform: uppercase;
 }
 
-/* ── Glow bubble (decorative) ────────────────────────────────── */
 .movie-card-glow-bubble {
     display: block;
     position: absolute;
@@ -121,12 +116,11 @@
     content: '';
     position: absolute;
     border-radius: 50%;
-    background: rgba(173, 40, 49, 0.08);
+    background: rgba(87, 204, 153, 0.07);
     backdrop-filter: blur(8px);
     opacity: 0;
-    transition: opacity 0.15s;
-    animation: card-bubble 2.5s ease-in-out infinite;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: opacity 0.2s;
+    animation: card-bubble 2.8s ease-in-out infinite;
 }
 
 .movie-card:hover .movie-card-glow-bubble::before {
@@ -143,7 +137,7 @@
     width: 70px;
     height: 70px;
     opacity: 1;
-    animation-delay: -1s;
+    animation-delay: -1.1s;
 }
 
 @keyframes card-bubble {
@@ -158,48 +152,43 @@
     }
 }
 
-/* ── Badges ──────────────────────────────────────────────────── */
-.movie-card-badge {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    padding: 3px 7px;
-    border-radius: 4px;
-    background: rgba(13, 2, 3, 0.85);
-    border: 1px solid rgba(212, 133, 90, 0.3);
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--gold);
-    backdrop-filter: blur(4px);
-    z-index: 3;
-}
-
+.movie-card-badge,
 .movie-card-type {
     position: absolute;
     top: 8px;
-    left: 8px;
-    padding: 2px 7px;
-    border-radius: 4px;
-    background: rgba(13, 2, 3, 0.82);
-    border: 1px solid var(--border);
+    z-index: 3;
+    padding: 3px 8px;
+    border-radius: var(--radius-sm);
     font-size: 10px;
     font-weight: 500;
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    color: var(--text-muted);
-    z-index: 3;
+    backdrop-filter: blur(6px);
+    background: rgba(8, 24, 32, 0.85);
+    border: 1px solid var(--border);
+    line-height: 1.4;
 }
 
-/* ── Overlay ─────────────────────────────────────────────────── */
+.movie-card-badge {
+    right: 8px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    border-color: rgba(128, 237, 153, 0.25);
+    color: var(--gold);
+}
+
+.movie-card-type {
+    left: 8px;
+    color: var(--text-muted);
+}
+
 .movie-card-overlay {
     position: absolute;
     inset: 0;
     background: linear-gradient(to top,
-            rgba(13, 2, 3, 0.97) 0%,
-            rgba(22, 3, 6, 0.6) 50%,
+            rgba(8, 24, 32, 0.97) 0%,
+            rgba(22, 3, 6, 0.65) 45%,
             transparent 100%);
     opacity: 0;
     transition: opacity var(--transition);
@@ -212,10 +201,10 @@
 }
 
 .movie-card-overlay-title {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     color: var(--text);
-    line-height: 1.2;
+    line-height: 1.25;
 }
 
 .movie-card-overlay-btn {
@@ -224,28 +213,33 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
-    padding: 7px 10px;
+    padding: 8px 10px;
     border-radius: var(--radius);
     background: var(--accent);
     color: #fff;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     overflow: hidden;
-    transition: filter var(--transition-slow), letter-spacing var(--transition-slow);
+    transition:
+        filter var(--transition-slow),
+        letter-spacing var(--transition-slow),
+        transform var(--transition-snap);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
-/* Stripe injection via JS */
 .movie-card-overlay-btn span.nfx-stripe {
     position: absolute;
     top: 0;
     width: 2px;
     height: 100%;
-    background: rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.15);
     pointer-events: none;
     z-index: 0;
     transform: scaleY(0);
     transform-origin: bottom;
-    transition: transform 0.2s ease-in-out;
+    transition: transform 0.18s ease-in-out;
 }
 
 .movie-card-overlay-btn span.nfx-stripe:nth-child(even) {
@@ -270,15 +264,16 @@
 }
 
 .movie-card-overlay-btn:hover {
-    filter: drop-shadow(0 0 6px var(--accent));
-    letter-spacing: 0.04em;
+    filter: drop-shadow(0 0 8px var(--accent));
+    letter-spacing: 0.1em;
+    transform: translateY(-1px);
 }
 
-/* ── Info strip ──────────────────────────────────────────────── */
 .movie-card-info {
-    padding: 10px 12px 12px;
+    padding: 10px 12px 13px;
     background: var(--surface);
     border-radius: 0 0 calc(var(--radius) - 1px) calc(var(--radius) - 1px);
+    border-top: 1px solid var(--border-subtle);
     position: relative;
     z-index: 1;
 }
@@ -290,7 +285,8 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-bottom: 4px;
+    margin-bottom: 5px;
+    letter-spacing: -0.01em;
 }
 
 .movie-card-meta {
@@ -301,11 +297,13 @@
 
 .movie-card-year {
     font-size: 11px;
-    color: var(--text-muted);
+    color: var(--text-faint);
+    letter-spacing: 0.02em;
 }
 
 .movie-card-price {
     font-size: 13px;
     font-weight: 500;
     color: var(--gold);
+    letter-spacing: -0.01em;
 }

@@ -1,20 +1,15 @@
-/* ═══════════════════════════════════════════════════════════════
-   SUPINFO.TV — Main stylesheet bundle
-   Import order matters: base → components → (pages loaded separately)
-═══════════════════════════════════════════════════════════════ */
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
 
-/* Base */
 @import 'base/variables.css';
 @import 'base/reset.css';
 @import 'base/layout.css';
 @import 'base/typography.css';
 
-/* Components */
 @import 'components/navbar.css';
 @import 'components/loader.css';
 @import 'components/movie-card.css';
 @import 'components/buttons.css';
+@import 'components/forms.css';
 @import 'components/logout-button.css';
 @import 'components/order-button.css';
 @import 'components/footer.css';

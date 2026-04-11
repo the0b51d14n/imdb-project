@@ -1,6 +1,3 @@
-/* ═══════════════════════════════════════════════════════════════
-   NAVBAR
-═══════════════════════════════════════════════════════════════ */
 .navbar {
     position: fixed;
     top: 0;
@@ -11,17 +8,21 @@
     display: flex;
     align-items: center;
     padding: 0 40px;
-    transition: background var(--transition), backdrop-filter var(--transition);
+    transition:
+        background 0.3s ease,
+        backdrop-filter 0.3s ease,
+        border-color 0.3s ease,
+        box-shadow 0.3s ease;
 }
 
 .navbar.scrolled {
-    background: rgba(13, 2, 3, 0.95);
-    backdrop-filter: blur(14px);
+    background: rgba(8, 24, 32, 0.92);
+    backdrop-filter: blur(16px) saturate(1.4);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
     border-bottom: 1px solid var(--border);
-    box-shadow: 0 1px 20px rgba(100, 13, 20, 0.2);
+    box-shadow: 0 1px 0 var(--border), 0 4px 24px rgba(34, 87, 122, 0.25);
 }
 
-/* ── Inner ───────────────────────────────────────────────────── */
 .navbar-inner {
     width: 100%;
     max-width: var(--container);
@@ -31,11 +32,16 @@
     gap: 40px;
 }
 
-/* ── Logo ────────────────────────────────────────────────────── */
 .navbar-logo {
     display: flex;
     align-items: center;
     flex-shrink: 0;
+    transition: opacity var(--transition), filter var(--transition-slow);
+}
+
+.navbar-logo:hover {
+    opacity: 0.85;
+    filter: drop-shadow(0 0 8px var(--accent-glow));
 }
 
 .navbar-logo img {
@@ -44,7 +50,6 @@
     display: block;
 }
 
-/* ── Links ───────────────────────────────────────────────────── */
 .navbar-links {
     display: flex;
     align-items: center;
@@ -54,12 +59,13 @@
 }
 
 .navbar-links a {
-    font-size: 14px;
+    font-size: 13px;
+    font-weight: 400;
     color: var(--text-muted);
-    transition: color var(--transition);
-    letter-spacing: 0.01em;
+    letter-spacing: 0.02em;
     position: relative;
     padding-bottom: 6px;
+    transition: color var(--transition);
 }
 
 .navbar-links a:hover,
@@ -67,7 +73,6 @@
     color: var(--text);
 }
 
-/* Active indicator element (GSAP-driven) */
 .navbar-links .active-element {
     --active-element-scale-x: 1;
     --active-element-scale-y: 1;
@@ -84,6 +89,7 @@
     width: 36px;
     border-radius: 2px;
     background-color: var(--accent);
+    box-shadow: 0 0 8px var(--accent-glow);
     opacity: var(--active-element-show);
     pointer-events: none;
 }
@@ -104,7 +110,7 @@
     overflow: visible;
     height: 5px;
     filter:
-        blur(0.5px) drop-shadow(2px 0px 8px rgba(173, 40, 49, 0.5)) drop-shadow(1px 0px 2px rgba(196, 48, 64, 0.9)) drop-shadow(0px 0px 3px rgba(220, 80, 90, 0.4));
+        blur(0.5px) drop-shadow(2px 0px 8px rgba(87, 204, 153, 0.4)) drop-shadow(1px 0px 2px rgba(56, 163, 165, 0.9)) drop-shadow(0px 0px 3px rgba(87, 204, 153, 0.4));
 }
 
 .navbar-links .active-element .strike {
@@ -137,11 +143,10 @@
     transform: rotateY(180deg);
 }
 
-/* ── Right zone ──────────────────────────────────────────────── */
 .navbar-right {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     margin-left: auto;
 }
 
@@ -154,13 +159,20 @@
     align-items: center;
     justify-content: center;
     color: var(--text-muted);
-    transition: color var(--transition), background var(--transition);
+    border: 1px solid transparent;
+    transition:
+        color var(--transition),
+        background var(--transition),
+        border-color var(--transition),
+        transform var(--transition-snap);
 }
 
 .navbar-search-btn:hover,
 .navbar-cart:hover {
     color: var(--text);
     background: var(--surface-2);
+    border-color: var(--border);
+    transform: scale(1.08);
 }
 
 .navbar-cart {
@@ -169,67 +181,35 @@
 
 .cart-badge {
     position: absolute;
-    top: 4px;
-    right: 4px;
-    width: 16px;
+    top: 3px;
+    right: 3px;
+    min-width: 16px;
     height: 16px;
-    border-radius: 50%;
+    padding: 0 3px;
+    border-radius: 99px;
     background: var(--accent);
     color: #fff;
-    font-size: 10px;
-    font-weight: 500;
+    font-size: 9px;
+    font-weight: 600;
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 0 0 2px var(--bg);
+    letter-spacing: 0;
 }
 
-.btn-nav-login {
-    padding: 7px 18px;
-    border-radius: var(--radius);
-    font-size: 13px;
-    font-weight: 400;
-    color: var(--text-muted);
-    border: 1px solid var(--border);
-    transition: color var(--transition), border-color var(--transition), background var(--transition);
-}
-
-.btn-nav-login:hover {
-    color: var(--text);
-    border-color: var(--accent);
-    background: rgba(173, 40, 49, 0.08);
-}
-
-.btn-nav-register {
-    padding: 7px 18px;
-    border-radius: var(--radius);
-    font-size: 13px;
-    font-weight: 500;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    transition: filter 0.5s, letter-spacing 0.5s;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.btn-nav-register>strong {
-    position: relative;
-    z-index: 1;
-}
-
-.btn-nav-register:hover {
-    filter: drop-shadow(0 0 10px var(--accent)) drop-shadow(0 0 30px rgba(173, 40, 49, 0.6));
-    letter-spacing: 0.1em;
-    color: #fff;
-}
-
-/* ── Hamburger ───────────────────────────────────────────────── */
 .navbar-hamburger {
     display: none;
     flex-direction: column;
     gap: 5px;
-    padding: 4px;
+    padding: 6px;
     margin-left: auto;
+    border-radius: var(--radius-sm);
+    transition: background var(--transition);
+}
+
+.navbar-hamburger:hover {
+    background: var(--surface-2);
 }
 
 .navbar-hamburger span {
@@ -241,7 +221,6 @@
     transition: all var(--transition);
 }
 
-/* ── Mobile ──────────────────────────────────────────────────── */
 @media (max-width: 768px) {
     .navbar {
         padding: 0 16px;
@@ -251,7 +230,6 @@
         display: none;
     }
 
-    /* Opened via JS: toggle class .mobile-open */
     .navbar-links.mobile-open {
         display: flex;
         flex-direction: column;
@@ -260,12 +238,18 @@
         top: var(--navbar-h);
         left: 0;
         right: 0;
-        background: rgba(13, 2, 3, 0.98);
-        /* var(--bg) with opacity */
-        padding: 16px 24px;
-        gap: 16px;
+        background: rgba(8, 24, 32, 0.98);
+        backdrop-filter: blur(20px);
+        padding: 20px 24px;
+        gap: 20px;
         border-bottom: 1px solid var(--border);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
         z-index: 99;
+    }
+
+    .navbar-links.mobile-open a {
+        font-size: 15px;
+        padding-bottom: 0;
     }
 
     .navbar-hamburger {

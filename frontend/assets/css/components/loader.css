@@ -1,6 +1,3 @@
-/* ═══════════════════════════════════════════════════════════════
-   PAGE LOADER
-═══════════════════════════════════════════════════════════════ */
 .page-loader {
     position: fixed;
     inset: 0;
@@ -10,7 +7,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 28px;
+    gap: 32px;
     transition: opacity 0.5s ease, visibility 0.5s ease;
 }
 
@@ -20,7 +17,6 @@
     pointer-events: none;
 }
 
-/* ── Logo ────────────────────────────────────────────────────── */
 .loader-logo {
     display: flex;
     align-items: center;
@@ -31,7 +27,8 @@
     height: 48px;
     width: auto;
     opacity: 0.9;
-    animation: loader-logo-pulse 2s ease-in-out infinite;
+    animation: loader-logo-pulse 2.4s ease-in-out infinite;
+    filter: drop-shadow(0 0 16px var(--accent-glow));
 }
 
 @keyframes loader-logo-pulse {
@@ -40,15 +37,16 @@
     100% {
         opacity: 0.9;
         transform: scale(1);
+        filter: drop-shadow(0 0 16px var(--accent-glow));
     }
 
     50% {
-        opacity: 0.55;
-        transform: scale(0.97);
+        opacity: 0.5;
+        transform: scale(0.96);
+        filter: drop-shadow(0 0 4px var(--accent-glow));
     }
 }
 
-/* ── Shapes ──────────────────────────────────────────────────── */
 .loader-shapes {
     display: flex;
     align-items: center;
@@ -57,7 +55,7 @@
 }
 
 .loader-shape {
-    --path: var(--border);
+    --path: var(--border-bright);
     --dot: var(--accent);
     --duration: 3s;
     width: 36px;
@@ -73,7 +71,7 @@
     position: absolute;
     display: block;
     background: var(--dot);
-    box-shadow: 0 0 6px var(--accent);
+    box-shadow: 0 0 8px var(--accent), 0 0 16px var(--accent-glow);
     top: 30px;
     left: 15px;
     transform: translate(-14px, -14px);
@@ -124,19 +122,24 @@
     animation: dotTriangle var(--duration) cubic-bezier(0.785, 0.135, 0.15, 0.86) infinite;
 }
 
-/* ── Progress bar ────────────────────────────────────────────── */
 .loader-bar {
-    width: 120px;
+    width: 140px;
     height: 2px;
     background: var(--surface-2);
-    border-radius: 2px;
+    border-radius: 99px;
     overflow: hidden;
+    position: relative;
 }
 
 .loader-bar-inner {
     height: 100%;
-    background: linear-gradient(to right, var(--cherry), var(--accent));
-    animation: loader-fill 1s ease-out forwards;
+    background: linear-gradient(to right, var(--deep), var(--accent), var(--gold));
+    background-size: 200% 100%;
+    animation:
+        loader-fill 1.2s var(--ease-out-expo) forwards,
+        loader-shimmer 1.8s ease-in-out infinite 0.4s;
+    border-radius: 99px;
+    box-shadow: 0 0 8px var(--accent-glow);
 }
 
 @keyframes loader-fill {
@@ -149,7 +152,16 @@
     }
 }
 
-/* ── Shape animations ────────────────────────────────────────── */
+@keyframes loader-shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
 @keyframes pathTriangle {
     33% {
         stroke-dashoffset: 74;

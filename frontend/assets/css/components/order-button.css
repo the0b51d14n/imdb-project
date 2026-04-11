@@ -24,18 +24,31 @@
     cursor: pointer;
     text-align: center;
     position: relative;
-    border: none;
+    border: 1px solid var(--border);
     outline: none;
     color: var(--color);
     background: var(--background);
     border-radius: var(--br, var(--radius));
     font-family: var(--font);
+    font-weight: 500;
+    font-size: 13px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
     -webkit-appearance: none;
     -webkit-tap-highlight-color: transparent;
     transform-style: preserve-3d;
     transform: rotateX(var(--rx, 0deg)) translateZ(0);
-    transition: transform 0.5s, border-radius 0.3s linear var(--br-d, 0s);
-    border: 1px solid var(--border);
+    transition:
+        transform 0.5s var(--ease-out-expo),
+        border-radius 0.3s linear var(--br-d, 0s),
+        border-color var(--transition),
+        box-shadow var(--transition-slow);
+    will-change: transform;
+}
+
+.btn-order:not(.animation):hover {
+    border-color: var(--border-bright);
+    box-shadow: 0 0 16px var(--accent-glow);
 }
 
 .btn-order::before,
@@ -52,11 +65,19 @@
     transform: rotateX(90deg) scaleX(var(--sy, 1));
 }
 
+.btn-order::after {
+    --sy: var(--progress, 0);
+    --b: var(--street-fill);
+    box-shadow: 0 0 8px var(--accent-glow);
+}
+
 .btn-order .default,
 .btn-order .success {
     display: block;
     font-weight: 500;
-    font-size: 14px;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     line-height: 24px;
     opacity: var(--o, 1);
     transition: opacity 0.3s;
@@ -69,11 +90,6 @@
     left: 0;
     right: 0;
     color: var(--success);
-}
-
-.btn-order::after {
-    --sy: var(--progress, 0);
-    --b: var(--street-fill);
 }
 
 .btn-order .success svg {
@@ -251,7 +267,6 @@
     transform: translateX(calc(var(--hx, 0) * 1px));
 }
 
-/* States */
 .btn-order.animation {
     --rx: -90deg;
     --br: 0;
@@ -265,6 +280,8 @@
     --rx: 0deg;
     --br: var(--radius);
     --br-d: .2s;
+    border-color: rgba(87, 204, 153, 0.4);
+    box-shadow: 0 0 16px rgba(87, 204, 153, 0.2);
 }
 
 .btn-order.animation.done .success {

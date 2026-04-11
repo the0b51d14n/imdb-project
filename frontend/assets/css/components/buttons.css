@@ -1,151 +1,205 @@
-/* ═══════════════════════════════════════════════════════════════
-   BUTTONS — shared styles & Netflix stripe effect
-═══════════════════════════════════════════════════════════════ */
-
-/* ── Stripe overlay (injected by navbar.js) ──────────────────── */
 .btn-primary,
 .btn-ghost,
 .btn-more,
-.btn-nav-register {
+.btn-nav-register,
+.btn-nav-login {
     position: relative;
     overflow: hidden;
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: var(--radius);
+    font-family: var(--font);
+    font-weight: 500;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    border: none;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+        filter var(--transition-slow),
+        letter-spacing var(--transition-slow),
+        transform var(--transition-snap),
+        background var(--transition),
+        border-color var(--transition),
+        color var(--transition);
+    will-change: transform, filter;
+}
+
+.btn-primary:active,
+.btn-ghost:active,
+.btn-more:active,
+.btn-nav-register:active,
+.btn-nav-login:active {
+    transform: scale(0.97) translateY(1px);
+}
+
+.btn-primary>*:not(.nfx-stripe),
+.btn-ghost>*:not(.nfx-stripe),
+.btn-more>*:not(.nfx-stripe),
+.btn-nav-register>*:not(.nfx-stripe),
+.btn-nav-login>*:not(.nfx-stripe) {
+    position: relative;
+    z-index: 1;
 }
 
 .btn-primary span.nfx-stripe,
 .btn-ghost span.nfx-stripe,
 .btn-more span.nfx-stripe,
-.btn-nav-register span.nfx-stripe {
+.btn-nav-register span.nfx-stripe,
+.btn-nav-login span.nfx-stripe {
     position: absolute;
     top: 0;
     width: 2px;
     height: 100%;
     pointer-events: none;
-    transition: transform 0.2s ease-in-out;
     z-index: 0;
     transform: scaleY(0);
     transform-origin: bottom;
+    transition: transform 0.18s ease-in-out;
 }
 
-/* Alternate stripe origins for ripple effect */
 .btn-primary span.nfx-stripe:nth-child(even),
 .btn-ghost span.nfx-stripe:nth-child(even),
 .btn-more span.nfx-stripe:nth-child(even),
-.btn-nav-register span.nfx-stripe:nth-child(even) {
+.btn-nav-register span.nfx-stripe:nth-child(even),
+.btn-nav-login span.nfx-stripe:nth-child(even) {
     transform-origin: top;
 }
 
 .btn-primary:hover span.nfx-stripe,
 .btn-ghost:hover span.nfx-stripe,
 .btn-more:hover span.nfx-stripe,
-.btn-nav-register:hover span.nfx-stripe {
+.btn-nav-register:hover span.nfx-stripe,
+.btn-nav-login:hover span.nfx-stripe {
     transform: scaleY(1);
 }
 
 .btn-primary:hover span.nfx-stripe:nth-child(odd),
 .btn-ghost:hover span.nfx-stripe:nth-child(odd),
 .btn-more:hover span.nfx-stripe:nth-child(odd),
-.btn-nav-register:hover span.nfx-stripe:nth-child(odd) {
+.btn-nav-register:hover span.nfx-stripe:nth-child(odd),
+.btn-nav-login:hover span.nfx-stripe:nth-child(odd) {
     transform-origin: top;
 }
 
 .btn-primary:hover span.nfx-stripe:nth-child(even),
 .btn-ghost:hover span.nfx-stripe:nth-child(even),
 .btn-more:hover span.nfx-stripe:nth-child(even),
-.btn-nav-register:hover span.nfx-stripe:nth-child(even) {
+.btn-nav-register:hover span.nfx-stripe:nth-child(even),
+.btn-nav-login:hover span.nfx-stripe:nth-child(even) {
     transform-origin: bottom;
 }
 
-/* Keep text above stripes */
-.btn-primary>*:not(.nfx-stripe),
-.btn-ghost>*:not(.nfx-stripe),
-.btn-more>*:not(.nfx-stripe),
-.btn-nav-register>*:not(.nfx-stripe) {
-    position: relative;
-    z-index: 1;
-}
-
-/* Stripe colours */
-.btn-primary span.nfx-stripe,
-.btn-nav-register span.nfx-stripe {
-    background: rgba(255, 255, 255, 0.18);
-}
-
-.btn-ghost span.nfx-stripe,
-.btn-more span.nfx-stripe {
-    background: var(--accent);
-}
-
-/* ── btn-primary ─────────────────────────────────────────────── */
 .btn-primary {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 26px;
-    border-radius: var(--radius);
+    padding: 12px 28px;
     background: var(--accent);
     color: #fff;
-    font-size: 14px;
-    font-weight: 500;
-    border: none;
-    transition: filter var(--transition-slow), letter-spacing var(--transition-slow), transform var(--transition);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    border: 1px solid transparent;
+    box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.btn-primary span.nfx-stripe {
+    background: rgba(255, 255, 255, 0.15);
 }
 
 .btn-primary:hover {
-    filter: drop-shadow(0 0 10px var(--accent)) drop-shadow(0 0 28px rgba(128, 14, 19, 0.6));
+    filter: drop-shadow(0 0 10px var(--accent)) drop-shadow(0 0 28px rgba(87, 204, 153, 0.4));
     letter-spacing: 0.1em;
     color: #fff;
-    transform: translateY(-1px);
+    transform: translateY(-2px);
 }
 
-/* ── btn-ghost ───────────────────────────────────────────────── */
 .btn-ghost {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 26px;
-    border-radius: var(--radius);
-    background: rgba(245, 237, 232, 0.06);
+    padding: 12px 28px;
+    background: var(--accent-subtle);
     color: var(--text);
-    font-size: 14px;
-    font-weight: 400;
     border: 1px solid var(--border);
-    transition: filter var(--transition-slow), letter-spacing var(--transition-slow),
-        background var(--transition), border-color var(--transition);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+}
+
+.btn-ghost span.nfx-stripe {
+    background: var(--accent);
+    opacity: 0.18;
 }
 
 .btn-ghost:hover {
-    filter: drop-shadow(0 0 10px var(--accent)) drop-shadow(0 0 28px rgba(128, 14, 19, 0.5));
+    filter: drop-shadow(0 0 10px var(--accent)) drop-shadow(0 0 28px rgba(87, 204, 153, 0.35));
     letter-spacing: 0.1em;
-    background: rgba(245, 237, 232, 0.10);
+    background: rgba(173, 40, 49, 0.14);
     border-color: var(--accent);
     color: #fff;
+    transform: translateY(-2px);
 }
 
-/* ── btn-more ────────────────────────────────────────────────── */
 .btn-more {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
+    padding: 7px 16px;
+    font-size: 11px;
     color: var(--text-muted);
-    padding: 7px 14px;
+    background: transparent;
     border: 1px solid var(--border);
-    border-radius: var(--radius);
-    transition: filter var(--transition-slow), letter-spacing var(--transition-slow),
-        color var(--transition), border-color var(--transition);
-    white-space: nowrap;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+}
+
+.btn-more span.nfx-stripe {
+    background: var(--accent);
+    opacity: 0.14;
 }
 
 .btn-more:hover {
-    filter: drop-shadow(0 0 10px var(--accent)) drop-shadow(0 0 28px rgba(128, 14, 19, 0.5));
+    filter: drop-shadow(0 0 8px var(--accent));
     letter-spacing: 0.1em;
     color: #fff;
     border-color: var(--accent);
+    transform: translateY(-1px);
+}
+
+.btn-nav-login {
+    padding: 7px 18px;
+    font-size: 12px;
+    color: var(--text-muted);
+    background: transparent;
+    border: 1px solid var(--border);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.btn-nav-login span.nfx-stripe {
+    background: var(--accent);
+    opacity: 0.12;
+}
+
+.btn-nav-login:hover {
+    color: var(--text);
+    border-color: var(--accent);
+    background: var(--accent-subtle);
+    transform: translateY(-1px);
+}
+
+.btn-nav-register {
+    padding: 7px 18px;
+    font-size: 12px;
+    background: var(--accent);
+    color: #fff;
+    border: 1px solid transparent;
+    box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.btn-nav-register>strong {
+    position: relative;
+    z-index: 1;
+    font-weight: 500;
+}
+
+.btn-nav-register span.nfx-stripe {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.btn-nav-register:hover {
+    filter: drop-shadow(0 0 10px var(--accent)) drop-shadow(0 0 30px rgba(173, 40, 49, 0.6));
+    letter-spacing: 0.1em;
+    color: #fff;
+    transform: translateY(-1px);
 }
