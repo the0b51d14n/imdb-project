@@ -22,7 +22,6 @@ if (!isset($basePath)) {
       <a href="<?= $basePath ?>/pages/movies.php">Films</a>
       <a href="<?= $basePath ?>/pages/search.php">Recherche</a>
       <a href="<?= $basePath ?>/pages/login.php">Connexion</a>
-      <a href="<?= $basePath ?>/pages/login.php?mode=register">S'inscrire</a>
     </div>
 
   </div>

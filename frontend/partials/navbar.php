@@ -77,9 +77,6 @@ if (!isset($basePath)) {
         </button>
       <?php else: ?>
         <a href="<?= $basePath ?>/pages/login.php" class="btn-nav-login">Connexion</a>
-        <a href="<?= $basePath ?>/pages/login.php?mode=register" class="btn-nav-register" id="btn-register">
-          <strong>S'inscrire</strong>
-        </a>
       <?php endif; ?>
     </div>
 
