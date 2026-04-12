@@ -1,0 +1,185 @@
+# ══════════════════════════════════════════════════════════════════════════════
+#  .github/workflows/security.yml — Supinfo.TV
+#  CI/CD : audit de sécurité automatique à chaque push/PR sur main et develop.
+# ══════════════════════════════════════════════════════════════════════════════
+
+name: Security Audit
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  # ── 1. Scan de secrets ──────────────────────────────────────────────────────
+  secret-scan:
+    name: Détection de secrets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Gitleaks — scan de secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  # ── 2. Lint & syntaxe PHP ───────────────────────────────────────────────────
+  php-lint:
+    name: Syntaxe PHP
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: php-cs-fixer
+
+      - name: Vérification syntaxe PHP
+        run: |
+          find . -name "*.php" \
+            ! -path "./vendor/*" \
+            ! -path "./node_modules/*" \
+            -exec php -l {} \; | grep -v "No syntax errors" || true
+          
+          # Vérification stricte
+          errors=0
+          while IFS= read -r file; do
+            result=$(php -l "$file" 2>&1)
+            if echo "$result" | grep -q "Parse error\|Fatal error"; then
+              echo "❌ $file"
+              echo "$result"
+              errors=$((errors + 1))
+            fi
+          done < <(find . -name "*.php" ! -path "./vendor/*")
+          
+          if [ $errors -gt 0 ]; then
+            echo "::error::$errors fichier(s) PHP avec erreurs de syntaxe"
+            exit 1
+          fi
+          echo "✅ Syntaxe PHP valide"
+
+  # ── 3. Scan de vulnérabilités PHP ──────────────────────────────────────────
+  php-security:
+    name: Vulnérabilités PHP
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+
+      - name: PHP Security Checker
+        run: |
+          # Vérifier les patterns dangereux courants
+          echo "🔍 Recherche de patterns dangereux..."
+          
+          DANGEROUS_PATTERNS=(
+            "eval("
+            "base64_decode.*\$_"
+            "system("
+            "exec("
+            "shell_exec("
+            "\$_GET\[.*\].*echo"
+            "mysql_query"
+            "md5.*password"
+            "sha1.*password"
+          )
+          
+          FOUND=0
+          for pattern in "${DANGEROUS_PATTERNS[@]}"; do
+            matches=$(grep -rn --include="*.php" -E "$pattern" \
+              --exclude-dir=vendor --exclude-dir=".git" . 2>/dev/null || true)
+            if [ -n "$matches" ]; then
+              echo "⚠️  Pattern dangereux '$pattern' trouvé :"
+              echo "$matches" | head -5
+              FOUND=$((FOUND + 1))
+            fi
+          done
+          
+          if [ $FOUND -gt 0 ]; then
+            echo "::warning::$FOUND pattern(s) potentiellement dangereux détecté(s) — revue manuelle requise"
+          else
+            echo "✅ Aucun pattern dangereux détecté"
+          fi
+
+  # ── 4. Vérification .env / fichiers sensibles ───────────────────────────────
+  sensitive-files:
+    name: Fichiers sensibles
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Vérifier l'absence de .env
+        run: |
+          if [ -f ".env" ]; then
+            echo "::error::Le fichier .env ne doit pas être commité !"
+            exit 1
+          fi
+          
+          # Vérifier l'absence d'autres fichiers sensibles
+          SENSITIVE=(
+            "*.pem" "*.key" "*.p12" "*.pfx"
+            "*.sql.gz" "*.dump"
+            "id_rsa" "id_ed25519"
+          )
+          
+          for pattern in "${SENSITIVE[@]}"; do
+            if compgen -G "$pattern" > /dev/null 2>&1; then
+              echo "::error::Fichier sensible détecté : $pattern"
+              exit 1
+            fi
+          done
+          
+          echo "✅ Aucun fichier sensible détecté"
+
+  # ── 5. Build Docker (vérification config) ───────────────────────────────────
+  docker-config:
+    name: Config Docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Valider docker-compose.yml
+        run: |
+          # Vérifier que docker-compose.yml est valide YAML
+          python3 -c "
+          import yaml, sys
+          try:
+              with open('docker-compose.yml') as f:
+                  yaml.safe_load(f)
+              print('✅ docker-compose.yml valide')
+          except Exception as e:
+              print(f'❌ docker-compose.yml invalide : {e}')
+              sys.exit(1)
+          "
+
+      - name: Vérifier que docker-compose n'a pas de credentials hardcodés
+        run: |
+          if grep -E "(password|secret|api_key)\s*:\s*['\"]?[a-zA-Z0-9_\-]{8,}['\"]?" docker-compose.yml | \
+             grep -v "\${" | grep -v "changeme" | grep -v "#"; then
+            echo "::error::Credentials potentiellement hardcodés dans docker-compose.yml"
+            exit 1
+          fi
+          echo "✅ Pas de credentials hardcodés dans docker-compose.yml"
+
+  # ── Résumé ──────────────────────────────────────────────────────────────────
+  summary:
+    name: Résumé de l'audit
+    runs-on: ubuntu-latest
+    needs: [secret-scan, php-lint, php-security, sensitive-files, docker-config]
+    if: always()
+    steps:
+      - name: Résultat
+        run: |
+          echo "## Audit de sécurité Supinfo.TV"
+          echo "Tous les jobs de sécurité ont été exécutés."
+          echo "Vérifiez les étapes ci-dessus pour le détail des résultats."

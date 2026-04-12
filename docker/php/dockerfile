@@ -1,0 +1,46 @@
+# ══════════════════════════════════════════════════════════════════════════════
+#  docker/php/Dockerfile — Supinfo.TV
+#  PHP 8.3-FPM avec extensions nécessaires
+# ══════════════════════════════════════════════════════════════════════════════
+
+FROM php:8.3-fpm-alpine
+
+# ── Dépendances système ───────────────────────────────────────────────────────
+RUN apk add --no-cache \
+    curl \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
+    oniguruma-dev \
+    libxml2-dev \
+    zip \
+    unzip \
+    git \
+    && docker-php-ext-configure gd \
+        --with-freetype \
+        --with-jpeg \
+    && docker-php-ext-install \
+        pdo \
+        pdo_mysql \
+        mysqli \
+        mbstring \
+        exif \
+        pcntl \
+        bcmath \
+        gd \
+        xml \
+        opcache
+
+# ── Composer ──────────────────────────────────────────────────────────────────
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+# ── Répertoire de travail ─────────────────────────────────────────────────────
+WORKDIR /var/www/html
+
+# ── Permissions ───────────────────────────────────────────────────────────────
+RUN chown -R www-data:www-data /var/www/html
+
+USER www-data
+
+EXPOSE 9000
+CMD ["php-fpm"]

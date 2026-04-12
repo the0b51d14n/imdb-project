@@ -1,65 +1,41 @@
-CREATE DATABASE IF NOT EXISTS supinfotv
-    CHARACTER SET utf8mb4
-    COLLATE utf8mb4_unicode_ci;
- 
-USE supinfotv;
- 
-CREATE TABLE IF NOT EXISTS users (
-    id            INT UNSIGNED    NOT NULL AUTO_INCREMENT,
-    username      VARCHAR(60)     NOT NULL,
-    email         VARCHAR(180)    NOT NULL,
-    password_hash VARCHAR(255)    NOT NULL,
-    created_at    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
- 
+-- ══════════════════════════════════════════════════════════════════════════════
+--  backend/Database.sql — Supinfo.TV (patch sécurité)
+--  Ajoute les tables et colonnes nécessaires au système auth renforcé.
+--  À exécuter après le schéma de base ou à intégrer dans init.sql.
+-- ══════════════════════════════════════════════════════════════════════════════
+
+-- ── 1. Colonnes de vérification e-mail (table users) ─────────────────────────
+ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS email_verified_at   DATETIME     NULL DEFAULT NULL AFTER password_hash,
+    ADD COLUMN IF NOT EXISTS email_verify_token  VARCHAR(64)  NULL DEFAULT NULL AFTER email_verified_at,
+    ADD COLUMN IF NOT EXISTS email_verify_expires DATETIME    NULL DEFAULT NULL AFTER email_verify_token;
+
+-- Index sur le token de vérification
+CREATE INDEX IF NOT EXISTS idx_users_verify_token ON users (email_verify_token);
+
+-- ── 2. Table de rate limiting (tentatives de connexion) ───────────────────────
+CREATE TABLE IF NOT EXISTS login_attempts (
+    id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    ip_address   VARCHAR(45)  NOT NULL,
+    attempted_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
     PRIMARY KEY (id),
-    UNIQUE KEY uq_users_email    (email),
-    UNIQUE KEY uq_users_username (username)
+    INDEX idx_attempts_ip_time (ip_address, attempted_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
- 
-CREATE TABLE IF NOT EXISTS cart_items (
+
+-- ── 3. Table de reset de mot de passe ─────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS password_resets (
     id         INT UNSIGNED NOT NULL AUTO_INCREMENT,
     user_id    INT UNSIGNED NOT NULL,
-    tmdb_id    INT UNSIGNED NOT NULL,
-    title      VARCHAR(255) NOT NULL,
-    poster     VARCHAR(512) NOT NULL DEFAULT '',
-    price      DECIMAL(6,2) NOT NULL,
-    added_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
- 
+    token_hash VARCHAR(64)  NOT NULL,
+    expires_at DATETIME     NOT NULL,
+    used_at    DATETIME     NULL DEFAULT NULL,
+    created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
     PRIMARY KEY (id),
-    UNIQUE KEY uq_cart_user_movie (user_id, tmdb_id),
-    CONSTRAINT fk_cart_user
+    UNIQUE KEY uq_reset_user (user_id),
+    INDEX idx_reset_token (token_hash),
+    CONSTRAINT fk_reset_user
         FOREIGN KEY (user_id) REFERENCES users(id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS orders (
-    id           INT UNSIGNED   NOT NULL AUTO_INCREMENT,
-    user_id      INT UNSIGNED   NOT NULL,
-    total_amount DECIMAL(10,2)  NOT NULL,
-    created_at   DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
- 
-    PRIMARY KEY (id),
-    CONSTRAINT fk_order_user
-        FOREIGN KEY (user_id) REFERENCES users(id)
-        ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS order_items (
-    id         INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    order_id   INT UNSIGNED NOT NULL,
-    tmdb_id    INT UNSIGNED NOT NULL,
-    title      VARCHAR(255) NOT NULL,
-    poster     VARCHAR(512) NOT NULL DEFAULT '',
-    price      DECIMAL(6,2) NOT NULL,
- 
-    PRIMARY KEY (id),
-    CONSTRAINT fk_order_item_order
-        FOREIGN KEY (order_id) REFERENCES orders(id)
-        ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE INDEX idx_cart_user    ON cart_items (user_id);
-CREATE INDEX idx_orders_user  ON orders     (user_id);
-CREATE INDEX idx_oi_order     ON order_items(order_id);
-CREATE INDEX idx_oi_tmdb      ON order_items(tmdb_id);
