@@ -1,175 +1,253 @@
 <?php
 
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/auth.php';
- 
-/**
- * Ajoute un film au panier de l'utilisateur connecté.
- * Idempotent : si le film est déjà dans le panier, rien ne se passe.
- *
- * @return array ['ok' => bool, 'error' => string|null]
- */
-function cart_add(int $tmdbId, string $title, string $poster, float $price): array
-{
-    $uid = auth_id();
-    if (!$uid) {
-        return ['ok' => false, 'error' => 'Vous devez être connecté pour ajouter un film au panier.'];
-    }
- 
-    try {
-        $stmt = db()->prepare(
-            'INSERT IGNORE INTO cart_items (user_id, tmdb_id, title, poster, price)
-             VALUES (:uid, :tid, :title, :poster, :price)'
-        );
-        $stmt->execute([
-            ':uid'    => $uid,
-            ':tid'    => $tmdbId,
-            ':title'  => mb_substr($title, 0, 255),
-            ':poster' => mb_substr($poster, 0, 512),
-            ':price'  => round($price, 2),
-        ]);
-        cart_sync_count();
-        return ['ok' => true, 'error' => null];
- 
-    } catch (PDOException $e) {
-        error_log('cart_add error: ' . $e->getMessage());
-        return ['ok' => false, 'error' => 'Erreur lors de l\'ajout au panier.'];
-    }
-}
- 
-/**
- * Supprime un film du panier de l'utilisateur connecté.
- *
- * @return array ['ok' => bool, 'error' => string|null]
- */
-function cart_remove(int $tmdbId): array
-{
-    $uid = auth_id();
-    if (!$uid) {
-        return ['ok' => false, 'error' => 'Non authentifié.'];
-    }
- 
-    $stmt = db()->prepare(
-        'DELETE FROM cart_items WHERE user_id = :uid AND tmdb_id = :tid'
-    );
-    $stmt->execute([':uid' => $uid, ':tid' => $tmdbId]);
-    cart_sync_count();
- 
-    return ['ok' => true, 'error' => null];
-}
+session_start();
 
-function cart_clear(): array
-{
-    $uid = auth_id();
-    if (!$uid) {
-        return ['ok' => false, 'error' => 'Non authentifié.'];
-    }
- 
-    $stmt = db()->prepare('DELETE FROM cart_items WHERE user_id = :uid');
-    $stmt->execute([':uid' => $uid]);
-    cart_sync_count();
- 
-    return ['ok' => true, 'error' => null];
-}
- 
-/**
- * Retourne tous les articles du panier de l'utilisateur connecté.
- *
- * @return array  Tableau d'articles [id, tmdb_id, title, poster, price, added_at]
- */
-function cart_get_items(): array
-{
-    $uid = auth_id();
-    if (!$uid) return [];
- 
-    $stmt = db()->prepare(
-        'SELECT id, tmdb_id, title, poster, price, added_at
-         FROM cart_items
-         WHERE user_id = :uid
-         ORDER BY added_at DESC'
-    );
-    $stmt->execute([':uid' => $uid]);
-    return $stmt->fetchAll();
-}
+require_once __DIR__ . '/../services/auth.php';
+require_once __DIR__ . '/../services/cart.php';
+require_once __DIR__ . '/../services/csrf.php';
 
-function cart_total(): float
-{
-    $uid = auth_id();
-    if (!$uid) return 0.0;
- 
-    $stmt = db()->prepare('SELECT COALESCE(SUM(price), 0) FROM cart_items WHERE user_id = :uid');
-    $stmt->execute([':uid' => $uid]);
-    return (float)$stmt->fetchColumn();
-}
+auth_start_session();
 
-function cart_has(int $tmdbId): bool
-{
-    $uid = auth_id();
-    if (!$uid) return false;
- 
-    $stmt = db()->prepare(
-        'SELECT 1 FROM cart_items WHERE user_id = :uid AND tmdb_id = :tid LIMIT 1'
-    );
-    $stmt->execute([':uid' => $uid, ':tid' => $tmdbId]);
-    return (bool)$stmt->fetchColumn();
-}
- 
-/**
- * Transforme le panier en commande (checkout).
- * Crée une entrée dans `orders` + `order_items`, puis vide le panier.
- *
- * @return array ['ok' => bool, 'order_id' => int|null, 'error' => string|null]
- */
-function cart_checkout(): array
-{
-    $uid   = auth_id();
-    $items = cart_get_items();
- 
-    if (!$uid || empty($items)) {
-        return ['ok' => false, 'order_id' => null, 'error' => 'Panier vide ou non authentifié.'];
-    }
- 
-    $pdo   = db();
-    $total = array_sum(array_column($items, 'price'));
- 
-    try {
-        $pdo->beginTransaction();
- 
-        $order = $pdo->prepare(
-            'INSERT INTO orders (user_id, total_amount) VALUES (:uid, :total)'
-        );
-        $order->execute([':uid' => $uid, ':total' => $total]);
-        $orderId = (int)$pdo->lastInsertId();
- 
-        $item = $pdo->prepare(
-            'INSERT INTO order_items (order_id, tmdb_id, title, poster, price)
-             VALUES (:oid, :tid, :title, :poster, :price)'
-        );
-        foreach ($items as $i) {
-            $item->execute([
-                ':oid'    => $orderId,
-                ':tid'    => $i['tmdb_id'],
-                ':title'  => $i['title'],
-                ':poster' => $i['poster'],
-                ':price'  => $i['price'],
-            ]);
+// Correction : basePath pointe vers la racine
+$basePath = rtrim(str_replace('\\', '/', dirname(dirname(dirname($_SERVER['SCRIPT_NAME'])))), '/');
+
+// Redirection vers login si non connecté
+auth_require($basePath . '/pages/login.php?redirect=' . urlencode('/pages/cart.php'));
+
+$actionMsg   = null;
+$actionError = null;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_verify();
+    $action = $_POST['action'] ?? '';
+
+    if ($action === 'remove') {
+        $tid = (int)($_POST['tmdb_id'] ?? 0);
+        if ($tid > 0) {
+            $r = cart_remove($tid);
+            if (!$r['ok']) $actionError = $r['error'] ?? null;
         }
- 
-        $del = $pdo->prepare('DELETE FROM cart_items WHERE user_id = :uid');
-        $del->execute([':uid' => $uid]);
- 
-        $pdo->commit();
- 
-        $_SESSION['last_purchased_movie_id'] = (int)$items[0]['tmdb_id'];
-        cart_sync_count();
- 
-        return ['ok' => true, 'order_id' => $orderId, 'error' => null];
- 
-    } catch (PDOException $e) {
-        $pdo->rollBack();
-        error_log('cart_checkout error: ' . $e->getMessage());
-        return ['ok' => false, 'order_id' => null, 'error' => 'Erreur lors du paiement. Veuillez réessayer.'];
+    } elseif ($action === 'clear') {
+        cart_clear();
+        $actionMsg = 'Panier vidé.';
+    } elseif ($action === 'checkout') {
+        $r = cart_checkout();
+        if ($r['ok']) {
+            header('Location: ' . $basePath . '/pages/profile.php?order=success');
+            exit;
+        }
+        $actionError = $r['error'];
     }
 }
- 
+
+$items = cart_get_items();
+$total = cart_total();
+
+$pageTitle  = 'Mon panier';
+$pageCSS    = 'pages/cart.css';
+$pageDesc   = 'Votre panier Supinfo.TV.';
+$activePage = '';
+
+include __DIR__ . '/../partials/head.php';
+include __DIR__ . '/../partials/loader.php';
+include __DIR__ . '/../partials/navbar.php';
 ?>
+
+<main>
+<div class="cart-page">
+
+  <?php if ($actionError): ?>
+  <div class="form-alert form-alert-error" style="max-width:600px;margin:0 auto 24px;">
+    <?= htmlspecialchars($actionError) ?>
+  </div>
+  <?php endif; ?>
+
+  <?php if (empty($items)): ?>
+  <div class="cart-empty">
+    <div class="cart-empty-icon">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <path d="M16 10a4 4 0 0 1-8 0"/>
+      </svg>
+    </div>
+    <h1 class="cart-empty-title">Votre panier est vide</h1>
+    <p class="cart-empty-sub">Découvrez notre catalogue et ajoutez des films à votre collection.</p>
+    <a href="<?= $basePath ?>/pages/movies.php" class="btn-primary">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M5 12h14M12 5l7 7-7 7"/>
+      </svg>
+      Explorer les films
+    </a>
+  </div>
+
+  <?php else: ?>
+  <div class="cart-layout">
+
+    <section class="cart-items-section">
+      <div class="cart-header">
+        <div>
+          <h1 class="cart-title">Mon panier</h1>
+          <p class="cart-count"><?= count($items) ?> film<?= count($items) > 1 ? 's' : '' ?></p>
+        </div>
+        <form method="POST" action="">
+          <?= csrf_field() ?>
+          <input type="hidden" name="action" value="clear">
+          <button type="submit" class="cart-clear-btn"
+                  onclick="return confirm('Vider le panier ?')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+              <path d="M10 11v6M14 11v6"/>
+              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+            Vider le panier
+          </button>
+        </form>
+      </div>
+
+      <div class="cart-items">
+        <?php foreach ($items as $item): ?>
+        <article class="cart-item" id="cart-item-<?= (int)$item['tmdb_id'] ?>">
+
+          <a href="<?= $basePath ?>/pages/movie-detail.php?id=<?= (int)$item['tmdb_id'] ?>"
+             class="cart-item-poster-wrap">
+            <?php if (!empty($item['poster'])): ?>
+              <img src="<?= htmlspecialchars($item['poster']) ?>"
+                   alt="<?= htmlspecialchars($item['title']) ?>"
+                   class="cart-item-poster">
+            <?php else: ?>
+              <div class="cart-item-poster-placeholder">🎬</div>
+            <?php endif; ?>
+          </a>
+
+          <div class="cart-item-info">
+            <a href="<?= $basePath ?>/pages/movie-detail.php?id=<?= (int)$item['tmdb_id'] ?>"
+               class="cart-item-title"><?= htmlspecialchars($item['title']) ?></a>
+            <div class="cart-item-tag">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+              </svg>
+              Achat définitif — accès illimité
+            </div>
+          </div>
+
+          <div class="cart-item-right">
+            <span class="cart-item-price"><?= number_format((float)$item['price'], 2, ',', '') ?>€</span>
+            <form method="POST" action="">
+              <?= csrf_field() ?>
+              <input type="hidden" name="action"  value="remove">
+              <input type="hidden" name="tmdb_id" value="<?= (int)$item['tmdb_id'] ?>">
+              <button type="submit" class="cart-item-remove" aria-label="Supprimer">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </form>
+          </div>
+
+        </article>
+        <?php endforeach; ?>
+      </div>
+
+      <a href="<?= $basePath ?>/pages/movies.php" class="cart-continue">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Continuer mes achats
+      </a>
+    </section>
+
+    <aside class="cart-summary">
+      <div class="cart-summary-inner">
+        <h2 class="cart-summary-title">Récapitulatif</h2>
+
+        <div class="cart-summary-lines">
+          <div class="cart-summary-line">
+            <span>Sous-total</span>
+            <span><?= number_format($total, 2, ',', '') ?>€</span>
+          </div>
+          <div class="cart-summary-line">
+            <span>Frais de service</span>
+            <span class="cart-free">Offerts</span>
+          </div>
+          <div class="cart-summary-line cart-summary-line--total">
+            <span>Total</span>
+            <span><?= number_format($total, 2, ',', '') ?>€</span>
+          </div>
+        </div>
+
+        <!-- Checkout via order-button animé -->
+        <form method="POST" action="" id="checkout-form">
+          <?= csrf_field() ?>
+          <input type="hidden" name="action" value="checkout">
+          <button class="btn-order" type="button" id="btn-checkout">
+            <span class="default">Commander</span>
+            <span class="success">
+              Commande envoyée
+              <svg viewBox="0 0 12 10"><polyline points="1.5 6 4.5 9 10.5 1"/></svg>
+            </span>
+            <svg class="truck" viewBox="0 0 72 28">
+              <g class="front"><path d="M0 0h47v28H0z"/></g>
+              <g><rect class="back" x="0" y="0" width="47" height="28" rx="1"/></g>
+              <g class="front">
+                <path d="M47 0h15.5l8 11v17H47V0z"/>
+                <path class="front" d="M47 0h15.5l8 11v17H47V0z"/>
+              </g>
+              <circle class="wheel" cx="14" cy="28" r="5"/>
+              <circle class="wheel" cx="57" cy="28" r="5"/>
+              <rect class="box" x="11" y="6" width="13" height="13" rx="1"/>
+            </svg>
+          </button>
+        </form>
+
+        <p class="cart-secure-note">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          Paiement 100% sécurisé
+        </p>
+
+        <div class="cart-summary-items">
+          <?php foreach ($items as $item): ?>
+          <div class="cart-summary-item">
+            <?php if (!empty($item['poster'])): ?>
+              <img src="<?= htmlspecialchars($item['poster']) ?>"
+                   alt="" class="cart-summary-thumb">
+            <?php endif; ?>
+            <span class="cart-summary-item-title"><?= htmlspecialchars($item['title']) ?></span>
+            <span class="cart-summary-item-price"><?= number_format((float)$item['price'], 2, ',', '') ?>€</span>
+          </div>
+          <?php endforeach; ?>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+  <?php endif; ?>
+
+</div>
+</main>
+
+<?php include __DIR__ . '/../partials/footer.php'; ?>
+<script src="<?= $basePath ?>/assets/js/components/order-button.js"></script>
+<script src="<?= $basePath ?>/assets/js/pages/cart.js"></script>
+<script>
+// Soumet le vrai formulaire quand l'animation order-button est terminée
+(function () {
+    const btn  = document.getElementById('btn-checkout');
+    const form = document.getElementById('checkout-form');
+    if (!btn || !form) return;
+    const obs = new MutationObserver(() => {
+        if (btn.classList.contains('done')) {
+            obs.disconnect();
+            setTimeout(() => form.submit(), 400);
+        }
+    });
+    obs.observe(btn, { attributes: true, attributeFilter: ['class'] });
+})();
+</script>
+</body>
+</html>

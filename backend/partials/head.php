@@ -1,18 +1,17 @@
 <?php
 // ══════════════════════════════════════════════════════════════════════════════
 //  backend/partials/head.php — Supinfo.TV
-//  Alias vers frontend/partials/head.php.
-//  Les pages backend utilisent les mêmes assets CSS/JS que le frontend.
+//  Correction : basePath recalculé depuis backend/pages/ pour pointer
+//  vers la racine du projet (pas /backend).
 // ══════════════════════════════════════════════════════════════════════════════
 
-// Recalculer basePath pour pointer vers le frontend
 if (!isset($basePath)) {
-    // backend/pages/ → dirname x1 = backend/ → dirname x2 = racine/
     $scriptDir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
+    // backend/pages/ → dirname x1 = /backend → dirname x2 = racine
     if (str_ends_with($scriptDir, '/pages')) {
-        $basePath = dirname($scriptDir);
+        $basePath = dirname(dirname($scriptDir));
     } else {
-        $basePath = $scriptDir;
+        $basePath = dirname($scriptDir);
     }
 }
 

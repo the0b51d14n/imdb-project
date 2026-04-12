@@ -1,21 +1,17 @@
 <?php
 // ══════════════════════════════════════════════════════════════════════════════
 //  backend/services/auth.php — Supinfo.TV
-//  Authentification complète : inscription, connexion, vérification e-mail,
-//  reset de mot de passe, rate limiting, session sécurisée.
 // ══════════════════════════════════════════════════════════════════════════════
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/security.php';
 
-// ── Constantes de session ─────────────────────────────────────────────────────
 if (!defined('SESSION_USER_ID'))       define('SESSION_USER_ID',       'user_id');
 if (!defined('SESSION_USER_NAME'))     define('SESSION_USER_NAME',     'user_name');
 if (!defined('SESSION_USER_EMAIL'))    define('SESSION_USER_EMAIL',    'user_email');
 if (!defined('SESSION_USER_VERIFIED')) define('SESSION_USER_VERIFIED', 'user_verified');
 if (!defined('BCRYPT_COST'))           define('BCRYPT_COST', 12);
 
-// ── Démarrage de session sécurisée ────────────────────────────────────────────
 function auth_start_session(): void
 {
     if (session_status() === PHP_SESSION_NONE) {
@@ -51,7 +47,7 @@ function auth_id(): ?int
 function auth_require(string $redirect = ''): void
 {
     if (!auth_check()) {
-        $base = rtrim(str_replace('\\', '/', dirname(dirname($_SERVER['SCRIPT_NAME']))), '/');
+        $base = rtrim(str_replace('\\', '/', dirname(dirname(dirname($_SERVER['SCRIPT_NAME'])))), '/');
         $url  = $base . '/pages/login.php';
         if ($redirect !== '') {
             $url .= '?redirect=' . urlencode($redirect);
@@ -61,7 +57,6 @@ function auth_require(string $redirect = ''): void
     }
 }
 
-// ── Validation du mot de passe ────────────────────────────────────────────────
 function auth_validate_password(string $password): ?string
 {
     if (strlen($password) < 8)             return "Le mot de passe doit contenir au moins 8 caractères.";
@@ -70,11 +65,10 @@ function auth_validate_password(string $password): ?string
     return null;
 }
 
-// ── Rate limiting ─────────────────────────────────────────────────────────────
 function auth_is_rate_limited(string $ip): bool
 {
-    $max   = defined('RATE_LIMIT_MAX_ATTEMPTS')  ? RATE_LIMIT_MAX_ATTEMPTS  : 5;
-    $decay = defined('RATE_LIMIT_DECAY_MINUTES') ? RATE_LIMIT_DECAY_MINUTES : 15;
+    $max    = defined('RATE_LIMIT_MAX_ATTEMPTS')  ? RATE_LIMIT_MAX_ATTEMPTS  : 5;
+    $decay  = defined('RATE_LIMIT_DECAY_MINUTES') ? RATE_LIMIT_DECAY_MINUTES : 15;
     $window = $decay * 60;
 
     try {
@@ -109,11 +103,9 @@ function auth_clear_attempts(string $ip): void
     } catch (PDOException) {}
 }
 
-// ── Tokens sécurisés ──────────────────────────────────────────────────────────
-function auth_generate_token(): string  { return bin2hex(random_bytes(32)); }
+function auth_generate_token(): string     { return bin2hex(random_bytes(32)); }
 function auth_hash_token(string $t): string { return hash('sha256', $t); }
 
-// ── Inscription ───────────────────────────────────────────────────────────────
 function auth_register(string $username, string $email, string $password): array
 {
     $username = trim($username);
@@ -155,6 +147,8 @@ function auth_register(string $username, string $email, string $password): array
         $_SESSION[SESSION_USER_VERIFIED] = false;
         $_SESSION['_created']            = time();
 
+        cart_sync_count();
+
         return ['ok' => true, 'error' => null, 'user_id' => $userId, 'token' => $verifyToken];
 
     } catch (PDOException $e) {
@@ -168,7 +162,6 @@ function auth_register(string $username, string $email, string $password): array
     }
 }
 
-// ── Connexion ─────────────────────────────────────────────────────────────────
 function auth_login(string $email, string $password): array
 {
     $ip    = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
@@ -217,7 +210,6 @@ function auth_login(string $email, string $password): array
     return ['ok' => true, 'error' => null, 'rate_limited' => false];
 }
 
-// ── Déconnexion ───────────────────────────────────────────────────────────────
 function auth_logout(): void
 {
     auth_start_session();
@@ -230,7 +222,6 @@ function auth_logout(): void
     session_destroy();
 }
 
-// ── Vérification e-mail ───────────────────────────────────────────────────────
 function auth_verify_email(string $token): array
 {
     $tokenHash = auth_hash_token($token);
@@ -276,7 +267,6 @@ function auth_resend_verification(int $userId): array
     return ['ok' => true, 'error' => null, 'token' => $token];
 }
 
-// ── Reset mot de passe ────────────────────────────────────────────────────────
 function auth_create_password_reset(string $email): array
 {
     $email = trim(strtolower($email));
@@ -347,7 +337,6 @@ function auth_reset_password(string $token, string $newPassword): array
     }
 }
 
-// ── Changement de mot de passe (connecté) ─────────────────────────────────────
 function auth_change_password(int $userId, string $current, string $newPass): array
 {
     $pwdErr = auth_validate_password($newPass);
@@ -367,9 +356,10 @@ function auth_change_password(int $userId, string $current, string $newPass): ar
     return ['ok' => true, 'error' => null];
 }
 
-// ── Synchronisation compteur panier ──────────────────────────────────────────
-// CORRECTION : utilise `cart_items` (table réelle du backend/services/cart.php)
-// et non `cart` (table du schéma principal non utilisée par les services)
+/**
+ * Synchronise le compteur panier en session depuis la DB.
+ * Log proprement si la table n'existe pas encore.
+ */
 function cart_sync_count(): void
 {
     $uid = auth_id();
@@ -382,8 +372,9 @@ function cart_sync_count(): void
         $stmt = db()->prepare('SELECT COUNT(*) FROM cart_items WHERE user_id = :uid');
         $stmt->execute([':uid' => $uid]);
         $_SESSION['cart_count'] = (int)$stmt->fetchColumn();
-    } catch (PDOException) {
-        // La table n'existe peut-être pas encore — on met 0 sans planter
+    } catch (PDOException $e) {
+        // Table manquante au premier déploiement — log et fallback à 0
+        error_log('[cart_sync_count] Table cart_items inaccessible : ' . $e->getMessage());
         $_SESSION['cart_count'] = 0;
     }
 }
