@@ -1,28 +1,74 @@
 -- ══════════════════════════════════════════════════════════════════════════════
---  backend/Database_patch_cart_items.sql — Supinfo.TV
+--  backend/Database.sql — Supinfo.TV
+--  Schéma complet de la base de données.
+--  Remplace l'ancien fichier qui ne contenait que le patch cart_items.
 --
---  PROBLÈME : backend/services/auth.php::cart_sync_count() et
---  backend/services/cart.php référencent la table `cart_items`,
---  mais le schéma principal (Database.sql) définit une table `cart`.
---
---  Ce patch crée `cart_items` avec la structure attendue par les services.
---  À exécuter après Database.sql si vous utilisez le backend PHP complet.
---
---  docker compose exec mysql mysql -u supinfotv_user -p supinfotv \
---    < backend/Database_patch_cart_items.sql
+--  Initialisation :
+--    docker compose exec mysql mysql -u supinfotv_user -p supinfotv < backend/Database.sql
+--  Ou au premier démarrage Docker, il est chargé automatiquement.
 -- ══════════════════════════════════════════════════════════════════════════════
 
 SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
 
--- ── Table cart_items (utilisée par backend/services/cart.php) ────────────────
+-- ── Table : users ─────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS users (
+    id                    INT UNSIGNED     NOT NULL AUTO_INCREMENT,
+    username              VARCHAR(60)      NOT NULL,
+    email                 VARCHAR(255)     NOT NULL,
+    password_hash         VARCHAR(255)     NOT NULL,
+
+    -- Vérification e-mail
+    email_verified_at     DATETIME         NULL DEFAULT NULL,
+    email_verify_token    VARCHAR(64)      NULL DEFAULT NULL,
+    email_verify_expires  DATETIME         NULL DEFAULT NULL,
+
+    created_at            DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at            DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_users_email    (email),
+    UNIQUE KEY uq_users_username (username),
+    INDEX idx_users_email_verify_token (email_verify_token)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ── Table : login_attempts (rate limiting) ────────────────────────────────────
+CREATE TABLE IF NOT EXISTS login_attempts (
+    id           INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+    ip_address   VARCHAR(45)   NOT NULL,
+    attempted_at DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (id),
+    INDEX idx_login_attempts_ip (ip_address),
+    INDEX idx_login_attempts_at (attempted_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ── Table : password_resets ───────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS password_resets (
+    id         INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+    user_id    INT UNSIGNED  NOT NULL,
+    token_hash VARCHAR(64)   NOT NULL,
+    expires_at DATETIME      NOT NULL,
+    used_at    DATETIME      NULL DEFAULT NULL,
+    created_at DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_pr_user (user_id),
+    INDEX idx_pr_token (token_hash),
+    CONSTRAINT fk_pr_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ── Table : cart_items ────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS cart_items (
-    id         INT UNSIGNED     NOT NULL AUTO_INCREMENT,
-    user_id    INT UNSIGNED     NOT NULL,
-    tmdb_id    INT UNSIGNED     NOT NULL,
-    title      VARCHAR(255)     NOT NULL,
-    poster     VARCHAR(512)     NULL DEFAULT NULL,
-    price      DECIMAL(6,2)     NOT NULL,
-    added_at   DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id         INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+    user_id    INT UNSIGNED  NOT NULL,
+    tmdb_id    INT UNSIGNED  NOT NULL,
+    title      VARCHAR(255)  NOT NULL,
+    poster     VARCHAR(512)  NULL DEFAULT NULL,
+    price      DECIMAL(6,2)  NOT NULL,
+    added_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY (id),
     UNIQUE KEY uq_cart_user_tmdb (user_id, tmdb_id),
@@ -32,34 +78,34 @@ CREATE TABLE IF NOT EXISTS cart_items (
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ── Table orders (version simplifiée pour cart_checkout()) ───────────────────
--- Le schéma principal a une version plus complète avec order_number, etc.
--- On crée une version compatible si la table n'existe pas encore.
+-- ── Table : orders ────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS orders (
-    id           INT UNSIGNED     NOT NULL AUTO_INCREMENT,
-    user_id      INT UNSIGNED     NOT NULL,
-    total_amount DECIMAL(8,2)     NOT NULL,
-    created_at   DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id           INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+    user_id      INT UNSIGNED  NOT NULL,
+    total_amount DECIMAL(8,2)  NOT NULL,
+    created_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY (id),
     INDEX idx_orders_user (user_id),
-    CONSTRAINT fk_orders_user_ci
+    CONSTRAINT fk_orders_user
         FOREIGN KEY (user_id) REFERENCES users(id)
         ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ── Table order_items (pour cart_checkout() et orders_get_history()) ─────────
+-- ── Table : order_items ───────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS order_items (
-    id         INT UNSIGNED     NOT NULL AUTO_INCREMENT,
-    order_id   INT UNSIGNED     NOT NULL,
-    tmdb_id    INT UNSIGNED     NOT NULL,
-    title      VARCHAR(255)     NOT NULL,
-    poster     VARCHAR(512)     NULL DEFAULT NULL,
-    price      DECIMAL(6,2)     NOT NULL,
+    id         INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+    order_id   INT UNSIGNED  NOT NULL,
+    tmdb_id    INT UNSIGNED  NOT NULL,
+    title      VARCHAR(255)  NOT NULL,
+    poster     VARCHAR(512)  NULL DEFAULT NULL,
+    price      DECIMAL(6,2)  NOT NULL,
 
     PRIMARY KEY (id),
     INDEX idx_oi_order (order_id),
-    CONSTRAINT fk_oi_order_ci
+    CONSTRAINT fk_oi_order
         FOREIGN KEY (order_id) REFERENCES orders(id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+SET FOREIGN_KEY_CHECKS = 1;

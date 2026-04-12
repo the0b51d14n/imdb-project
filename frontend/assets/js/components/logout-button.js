@@ -54,36 +54,6 @@
             '--transform-leg2': 'rotate(10deg)',
             '--transform-calf2': 'rotate(-20deg)',
         },
-        falling1: {
-            '--figure-duration': '1600ms',
-            '--walking-duration': '400ms',
-            '--transform-arm1': 'rotate(-60deg)',
-            '--transform-wrist1': 'none',
-            '--transform-arm2': 'rotate(30deg)',
-            '--transform-wrist2': 'rotate(120deg)',
-            '--transform-leg1': 'rotate(-30deg)',
-            '--transform-calf1': 'rotate(-20deg)',
-            '--transform-leg2': 'rotate(20deg)',
-        },
-        falling2: {
-            '--walking-duration': '300ms',
-            '--transform-arm1': 'rotate(-100deg)',
-            '--transform-arm2': 'rotate(-60deg)',
-            '--transform-wrist2': 'rotate(60deg)',
-            '--transform-leg1': 'rotate(80deg)',
-            '--transform-calf1': 'rotate(20deg)',
-            '--transform-leg2': 'rotate(-60deg)',
-        },
-        falling3: {
-            '--walking-duration': '500ms',
-            '--transform-arm1': 'rotate(-30deg)',
-            '--transform-wrist1': 'rotate(40deg)',
-            '--transform-arm2': 'rotate(50deg)',
-            '--transform-wrist2': 'none',
-            '--transform-leg1': 'rotate(-30deg)',
-            '--transform-leg2': 'rotate(20deg)',
-            '--transform-calf2': 'none',
-        },
     };
 
     const applyState = (btn, name) => {
@@ -116,27 +86,14 @@
             applyState(btn, 'walking1');
 
             setTimeout(() => {
-                btn.classList.add('door-slammed');
                 applyState(btn, 'walking2');
 
+                // La porte claque → on redirige immédiatement
                 setTimeout(() => {
-                    btn.classList.add('falling');
-                    applyState(btn, 'falling1');
-
-                    setTimeout(() => {
-                        applyState(btn, 'falling2');
-
-                        setTimeout(() => {
-                            applyState(btn, 'falling3');
-
-                            setTimeout(() => {
-                                btn.classList.remove('clicked', 'door-slammed', 'falling');
-                                applyState(btn, 'default');
-                                if (href) window.location.href = href;
-                            }, ms('falling3', '--walking-duration'));
-                        }, ms('falling2', '--walking-duration'));
-                    }, ms('falling1', '--walking-duration'));
+                    btn.classList.add('door-slammed');
+                    if (href) window.location.href = href;
                 }, ms('walking2', '--figure-duration'));
+
             }, ms('walking1', '--figure-duration'));
         });
     });

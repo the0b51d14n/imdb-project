@@ -1,11 +1,11 @@
 # ══════════════════════════════════════════════════════════════════════════════
 #  docker-compose.yml — Supinfo.TV
-#  Lance l'environnement complet : PHP-FPM + Nginx + MySQL
+#  Lance l'environnement complet : PHP-FPM + Nginx + MySQL + phpMyAdmin
 #
 #  Démarrage : docker compose up -d
 #  Arrêt     : docker compose down
-#  Logs      : docker compose logs -f
-#  Accès     : http://localhost
+#  Accès app : http://localhost
+#  Accès BDD : http://localhost:8080
 # ══════════════════════════════════════════════════════════════════════════════
 
 services:
@@ -18,10 +18,9 @@ services:
     container_name: supinfotv_php
     restart: unless-stopped
     volumes:
-      - .:/var/www/html:ro          # lecture seule — le code ne peut pas être modifié depuis le container
+      - .:/var/www/html:ro
       - ./docker/php/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
     environment:
-      # Transmis depuis le .env — jamais hardcodés ici
       APP_ENV:                    ${APP_ENV}
       APP_DEBUG:                  ${APP_DEBUG}
       APP_SECRET:                 ${APP_SECRET}
@@ -71,11 +70,10 @@ services:
       MYSQL_DATABASE:      ${DB_NAME}
       MYSQL_USER:          ${DB_USER}
       MYSQL_PASSWORD:      ${DB_PASS}
-      # Root password séparé — jamais identique au user password
       MYSQL_ROOT_PASSWORD: ${APP_SECRET}
     volumes:
-      - mysql_data:/var/lib/mysql                     # données persistantes
-      - ./backend/Database.sql:/docker-entrypoint-initdb.d/init.sql:ro  # schéma auto-chargé
+      - mysql_data:/var/lib/mysql
+      - ./backend/Database.sql:/docker-entrypoint-initdb.d/init.sql:ro
       - ./docker/mysql/my.cnf:/etc/mysql/conf.d/custom.cnf:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB_USER}", "-p${DB_PASS}"]
@@ -83,6 +81,22 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+    networks:
+      - supinfotv_network
+
+  # ── PHPMYADMIN ─────────────────────────────────────────────────────────────
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: supinfotv_phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: ${APP_SECRET}
+    depends_on:
+      - mysql
     networks:
       - supinfotv_network
 

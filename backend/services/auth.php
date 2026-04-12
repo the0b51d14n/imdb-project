@@ -65,6 +65,47 @@ function auth_validate_password(string $password): ?string
     return null;
 }
 
+/**
+ * Valide qu'un domaine e-mail est réel (DNS) et non jetable.
+ * Retourne un message d'erreur ou null si tout est OK.
+ */
+function auth_validate_email_domain(string $email): ?string
+{
+    $domain = strtolower(substr(strrchr($email, '@'), 1));
+
+    // Blacklist des domaines e-mail jetables connus
+    $disposableDomains = [
+        'mailinator.com', 'guerrillamail.com', 'tempmail.com', 'throwam.com',
+        'yopmail.com', 'sharklasers.com', 'guerrillamailblock.com', 'grr.la',
+        'guerrillamail.info', 'guerrillamail.biz', 'guerrillamail.de',
+        'guerrillamail.net', 'guerrillamail.org', 'spam4.me', 'trashmail.com',
+        'trashmail.me', 'trashmail.net', 'dispostable.com', 'fakeinbox.com',
+        'mailnull.com', 'spamgourmet.com', 'spamgourmet.net', 'spamgourmet.org',
+        'maildrop.cc', 'tempr.email', 'discard.email', 'spamthisplease.com',
+        'mailnesia.com', 'filzmail.com', 'easytrashmail.com', 'getairmail.com',
+        'trashmail.at', 'trashmail.io', 'spambox.us', 'bobmail.info',
+        'chammy.info', 'drdrb.net', 'smellfear.com', 'objectmail.com',
+        'meltmail.com', 'zetmail.com', 'rmqkr.net', 'courriel.fr.nf',
+        'cool.fr.nf', 'jetable.fr.nf', 'nospam.ze.tc', 'nomail.xl.cx',
+        'mega.zik.dj', 'speed.1s.fr', 'moncourrier.fr.nf', 'monemail.fr.nf',
+        'monmail.fr.nf', 'mintemail.com', 'tempinbox.com', 'throwam.com',
+        'spamgrap.com', 'fakemail.net', 'temp-mail.org', 'throwam.com',
+        'mailtemp.info', 'getonemail.com', 'despam.it', 'mailscrap.com',
+        'spamavert.com', 'incognitomail.com', 'dodgeit.com', 'tempe-mail.com',
+    ];
+
+    if (in_array($domain, $disposableDomains, true)) {
+        return "Les adresses e-mail temporaires ne sont pas acceptées.";
+    }
+
+    // Vérification DNS : le domaine doit avoir un enregistrement MX ou A réel
+    if (!checkdnsrr($domain, 'MX') && !checkdnsrr($domain, 'A')) {
+        return "Adresse e-mail invalide.";
+    }
+
+    return null;
+}
+
 function auth_is_rate_limited(string $ip): bool
 {
     $max    = defined('RATE_LIMIT_MAX_ATTEMPTS')  ? RATE_LIMIT_MAX_ATTEMPTS  : 5;
@@ -113,8 +154,15 @@ function auth_register(string $username, string $email, string $password): array
 
     if (strlen($username) < 3 || strlen($username) > 60)
         return ['ok' => false, 'error' => "Le nom d'utilisateur doit contenir entre 3 et 60 caractères.", 'user_id' => null, 'token' => null];
+
     if (!filter_var($email, FILTER_VALIDATE_EMAIL))
         return ['ok' => false, 'error' => "Adresse e-mail invalide.", 'user_id' => null, 'token' => null];
+
+    // Validation domaine : DNS réel + pas de domaine jetable
+    $domainError = auth_validate_email_domain($email);
+    if ($domainError !== null)
+        return ['ok' => false, 'error' => $domainError, 'user_id' => null, 'token' => null];
+
     $pwdErr = auth_validate_password($password);
     if ($pwdErr)
         return ['ok' => false, 'error' => $pwdErr, 'user_id' => null, 'token' => null];
@@ -358,7 +406,6 @@ function auth_change_password(int $userId, string $current, string $newPass): ar
 
 /**
  * Synchronise le compteur panier en session depuis la DB.
- * Log proprement si la table n'existe pas encore.
  */
 function cart_sync_count(): void
 {
@@ -373,7 +420,6 @@ function cart_sync_count(): void
         $stmt->execute([':uid' => $uid]);
         $_SESSION['cart_count'] = (int)$stmt->fetchColumn();
     } catch (PDOException $e) {
-        // Table manquante au premier déploiement — log et fallback à 0
         error_log('[cart_sync_count] Table cart_items inaccessible : ' . $e->getMessage());
         $_SESSION['cart_count'] = 0;
     }
