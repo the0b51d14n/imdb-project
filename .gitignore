@@ -1,0 +1,130 @@
+# ══════════════════════════════════════════════════════════════════════════════
+#  .gitignore — Supinfo.TV
+#  Adapté à l'arborescence exacte du projet.
+#  Toute modification doit être validée par un responsable.
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+# ── VARIABLES D'ENVIRONNEMENT (PRIORITÉ ABSOLUE) ──────────────────────────────
+#  Contient les vraies valeurs : TMDB_API_KEY, PRICE_HMAC_SECRET,
+#  CSRF_SECRET, APP_SECRET, DB_PASS…
+#  Seul .env.example (sans valeurs réelles) est autorisé sur GitHub.
+.env
+.env.*
+!.env.example
+
+
+# ── DOCKER — DONNÉES PERSISTANTES ────────────────────────────────────────────
+#  Volumes MySQL : contiennent les vraies données utilisateurs (emails, hashs…)
+docker/mysql/data/
+docker/redis/data/
+docker/volumes/
+
+#  Certificats TLS locaux (ex : générés par mkcert pour dev HTTPS)
+docker/nginx/certs/
+docker/nginx/ssl/
+
+#  Surcharge locale de docker-compose (ports perso, bind mounts, etc.)
+docker-compose.override.yml
+docker-compose.local.yml
+
+
+# ── CLÉS & CERTIFICATS ────────────────────────────────────────────────────────
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+*.csr
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+
+
+# ── PHP — DÉPENDANCES & CACHE ─────────────────────────────────────────────────
+vendor/
+composer.lock
+
+#  Sessions PHP — peuvent contenir user_id, panier, token CSRF en clair
+var/
+tmp/
+cache/
+storage/
+*.session
+
+#  Logs — peuvent exposer stack traces, requêtes SQL, IPs utilisateurs
+*.log
+logs/
+log/
+
+
+# ── BASE DE DONNÉES ───────────────────────────────────────────────────────────
+#  Dumps & sauvegardes (contiennent mots de passe hashés, emails, commandes…)
+#  backend/Database.sql est le schéma vide → il PEUT être commité
+*.sql.gz
+*.dump
+*.db
+*.sqlite
+*.sqlite3
+database/dumps/
+db_backups/
+
+
+# ── UPLOADS UTILISATEURS (RGPD) ───────────────────────────────────────────────
+#  Avatars ou documents uploadés = données personnelles
+frontend/assets/uploads/
+backend/uploads/
+uploads/
+
+
+# ── NODE / BUILD FRONT-END ────────────────────────────────────────────────────
+#  Pas de Node dans ce projet actuellement, mais protection préventive
+node_modules/
+dist/
+build/
+npm-debug.log*
+yarn-error.log*
+
+
+# ── ÉDITEURS & IDE ────────────────────────────────────────────────────────────
+# JetBrains (PhpStorm — utilisé typiquement sur ce type de projet)
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+!.vscode/extensions.json
+
+# Vim / Emacs
+*.swp
+*.swo
+*~
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+
+# ── SYSTÈME D'EXPLOITATION ────────────────────────────────────────────────────
+# macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+
+# ── FICHIERS TEMPORAIRES & AUDITS ─────────────────────────────────────────────
+*.tmp
+*.bak
+*.backup
+*.orig
+*.old
+security-report*
+audit-report*
