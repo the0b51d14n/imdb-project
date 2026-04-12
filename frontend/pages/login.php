@@ -8,7 +8,8 @@
 session_start();
 
 if (!empty($_SESSION['user_id'])) {
-    header('Location: ../index.php');
+    $basePath = rtrim(str_replace('\\', '/', dirname(dirname($_SERVER['SCRIPT_NAME']))), '/');
+    header('Location: ' . $basePath . '/index.php');
     exit;
 }
 
@@ -29,8 +30,6 @@ $activePage = '';
 $basePath = rtrim(str_replace('\\', '/', dirname(dirname($_SERVER['SCRIPT_NAME']))), '/');
 
 // CSRF token pour le formulaire
-// Le handler backend gère la vérification — on passe le token via session
-if (session_status() === PHP_SESSION_NONE) session_start();
 if (empty($_SESSION['_csrf_token'])) {
     $_SESSION['_csrf_token'] = bin2hex(random_bytes(32));
 }
@@ -187,10 +186,6 @@ include __DIR__ . '/../partials/loader.php';
 
   const mode = '<?= $mode ?>';
   if (mode === 'register') container.classList.add('active');
-
-  // Auto-dismiss notice
-  const notice = document.querySelector('[data-notice]');
-  if (notice) setTimeout(() => notice.style.opacity = '0', 4000);
 </script>
 
 </body>

@@ -1,0 +1,342 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   frontend/assets/css/pages/profile.css — Supinfo.TV
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Layout ───────────────────────────────────────────────────────────────── */
+.profile-page {
+    padding-top: 48px;
+    padding-bottom: 80px;
+}
+
+.profile-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 40px;
+    align-items: start;
+}
+
+/* ── Header profil ────────────────────────────────────────────────────────── */
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 48px;
+    flex-wrap: wrap;
+}
+
+.profile-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--deep), var(--accent));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 28px;
+    font-weight: 500;
+    color: #fff;
+    border: 2px solid var(--border-bright);
+    box-shadow: 0 0 24px var(--accent-glow);
+    text-transform: uppercase;
+}
+
+.profile-name {
+    font-size: 28px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+
+.profile-email {
+    font-size: 14px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.profile-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    border-radius: 99px;
+    padding: 2px 8px;
+}
+
+.profile-badge-verified {
+    color: var(--accent);
+    border: 1px solid rgba(87, 204, 153, 0.3);
+}
+
+.profile-badge-unverified {
+    color: var(--text-faint);
+    border: 1px solid var(--border);
+}
+
+/* ── Banner succès commande ───────────────────────────────────────────────── */
+.profile-order-success {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: rgba(87, 204, 153, 0.1);
+    border: 1px solid rgba(87, 204, 153, 0.3);
+    border-radius: var(--radius-lg);
+    margin-bottom: 32px;
+    font-size: 14px;
+    color: var(--accent);
+    font-weight: 500;
+}
+
+/* ── Section bibliothèque ─────────────────────────────────────────────────── */
+.profile-section-header {
+    margin-bottom: 24px;
+}
+
+.profile-section-eyebrow {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 6px;
+}
+
+.profile-section-title {
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.profile-section-count {
+    font-size: 14px;
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+/* ── Films vide ───────────────────────────────────────────────────────────── */
+.profile-empty-library {
+    padding: 48px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    text-align: center;
+}
+
+.profile-empty-icon {
+    font-size: 40px;
+    margin-bottom: 16px;
+    opacity: 0.4;
+}
+
+/* ── Grille films achetés ─────────────────────────────────────────────────── */
+.profile-movies-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
+    margin-bottom: 48px;
+}
+
+/* ── Historique commandes ─────────────────────────────────────────────────── */
+.profile-order-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    margin-bottom: 12px;
+    transition: border-color var(--transition);
+}
+
+.profile-order-card:hover {
+    border-color: var(--border-bright);
+}
+
+.profile-order-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.profile-order-num {
+    font-size: 12px;
+    color: var(--text-faint);
+}
+
+.profile-order-date {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.profile-order-total {
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--gold);
+}
+
+.profile-order-items {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.profile-order-item-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+    font-size: 12px;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: border-color var(--transition);
+}
+
+.profile-order-item-link:hover {
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.profile-order-item-poster {
+    width: 28px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.profile-order-item-price {
+    color: var(--gold);
+    margin-left: auto;
+}
+
+/* ── Panneau sécurité (sticky) ────────────────────────────────────────────── */
+.profile-security-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    position: sticky;
+    top: calc(var(--navbar-h) + 24px);
+}
+
+.profile-security-eyebrow {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 16px;
+}
+
+.profile-security-title {
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 20px;
+}
+
+.profile-input {
+    width: 100%;
+    padding: 11px 14px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 13px;
+    outline: none;
+    margin-bottom: 12px;
+    box-sizing: border-box;
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.profile-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+.profile-input-hint {
+    font-size: 11px;
+    color: var(--text-faint);
+    margin-bottom: 16px;
+    line-height: 1.6;
+}
+
+.profile-logout-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    text-decoration: none;
+    margin-top: 24px;
+    transition: all var(--transition);
+}
+
+.profile-logout-link:hover {
+    color: var(--danger);
+    border-color: var(--danger);
+    background: rgba(224, 90, 106, 0.06);
+}
+
+.profile-alert {
+    padding: 12px 14px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+
+.profile-alert-success {
+    background: rgba(87, 204, 153, 0.1);
+    border: 1px solid rgba(87, 204, 153, 0.3);
+    color: var(--accent);
+}
+
+.profile-alert-error {
+    background: rgba(224, 90, 106, 0.08);
+    border: 1px solid var(--danger);
+    color: var(--danger);
+}
+
+.profile-divider {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+    .profile-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-security-panel {
+        position: static;
+        order: -1;
+    }
+}
+
+@media (max-width: 600px) {
+    .profile-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .profile-movies-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    }
+}

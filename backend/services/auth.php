@@ -9,11 +9,11 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/security.php';
 
 // ── Constantes de session ─────────────────────────────────────────────────────
-define('SESSION_USER_ID',       'user_id');
-define('SESSION_USER_NAME',     'user_name');
-define('SESSION_USER_EMAIL',    'user_email');
-define('SESSION_USER_VERIFIED', 'user_verified');
-define('BCRYPT_COST', 12);
+if (!defined('SESSION_USER_ID'))       define('SESSION_USER_ID',       'user_id');
+if (!defined('SESSION_USER_NAME'))     define('SESSION_USER_NAME',     'user_name');
+if (!defined('SESSION_USER_EMAIL'))    define('SESSION_USER_EMAIL',    'user_email');
+if (!defined('SESSION_USER_VERIFIED')) define('SESSION_USER_VERIFIED', 'user_verified');
+if (!defined('BCRYPT_COST'))           define('BCRYPT_COST', 12);
 
 // ── Démarrage de session sécurisée ────────────────────────────────────────────
 function auth_start_session(): void
@@ -29,7 +29,6 @@ function auth_start_session(): void
         session_start();
     }
 
-    // Régénère l'ID de session si elle est trop vieille (anti fixation)
     if (!isset($_SESSION['_created'])) {
         $_SESSION['_created'] = time();
     } elseif (time() - $_SESSION['_created'] > 1800) {
@@ -65,44 +64,31 @@ function auth_require(string $redirect = ''): void
 // ── Validation du mot de passe ────────────────────────────────────────────────
 function auth_validate_password(string $password): ?string
 {
-    if (strlen($password) < 8)              return "Le mot de passe doit contenir au moins 8 caractères.";
-    if (!preg_match('/[A-Z]/', $password))  return "Le mot de passe doit contenir au moins une majuscule.";
-    if (!preg_match('/[0-9]/', $password))  return "Le mot de passe doit contenir au moins un chiffre.";
-    if (!preg_match('/[^a-zA-Z0-9]/', $password)) {
-        // Caractère spécial recommandé mais non obligatoire — juste un avertissement
-    }
+    if (strlen($password) < 8)             return "Le mot de passe doit contenir au moins 8 caractères.";
+    if (!preg_match('/[A-Z]/', $password)) return "Le mot de passe doit contenir au moins une majuscule.";
+    if (!preg_match('/[0-9]/', $password)) return "Le mot de passe doit contenir au moins un chiffre.";
     return null;
 }
 
-// ── Rate limiting (stockage en DB) ────────────────────────────────────────────
-/**
- * Vérifie et enregistre une tentative de connexion.
- * Retourne true si la limite est atteinte (bloquer la requête).
- */
+// ── Rate limiting ─────────────────────────────────────────────────────────────
 function auth_is_rate_limited(string $ip): bool
 {
-    $max     = defined('RATE_LIMIT_MAX_ATTEMPTS')  ? RATE_LIMIT_MAX_ATTEMPTS  : 5;
-    $decay   = defined('RATE_LIMIT_DECAY_MINUTES') ? RATE_LIMIT_DECAY_MINUTES : 15;
-    $window  = $decay * 60;
+    $max   = defined('RATE_LIMIT_MAX_ATTEMPTS')  ? RATE_LIMIT_MAX_ATTEMPTS  : 5;
+    $decay = defined('RATE_LIMIT_DECAY_MINUTES') ? RATE_LIMIT_DECAY_MINUTES : 15;
+    $window = $decay * 60;
 
     try {
-        // Nettoyer les anciennes tentatives
         db()->prepare(
             'DELETE FROM login_attempts WHERE attempted_at < DATE_SUB(NOW(), INTERVAL :sec SECOND)'
         )->execute([':sec' => $window]);
 
-        // Compter les tentatives récentes
         $stmt = db()->prepare(
             'SELECT COUNT(*) FROM login_attempts WHERE ip_address = :ip
              AND attempted_at > DATE_SUB(NOW(), INTERVAL :sec SECOND)'
         );
         $stmt->execute([':ip' => $ip, ':sec' => $window]);
-        $count = (int)$stmt->fetchColumn();
-
-        return $count >= $max;
-
+        return (int)$stmt->fetchColumn() >= $max;
     } catch (PDOException) {
-        // Si la table n'existe pas encore, on ne bloque pas
         return false;
     }
 }
@@ -110,63 +96,41 @@ function auth_is_rate_limited(string $ip): bool
 function auth_record_attempt(string $ip): void
 {
     try {
-        db()->prepare(
-            'INSERT INTO login_attempts (ip_address) VALUES (:ip)'
-        )->execute([':ip' => $ip]);
-    } catch (PDOException) {
-        // Silencieux
-    }
+        db()->prepare('INSERT INTO login_attempts (ip_address) VALUES (:ip)')
+            ->execute([':ip' => $ip]);
+    } catch (PDOException) {}
 }
 
 function auth_clear_attempts(string $ip): void
 {
     try {
-        db()->prepare(
-            'DELETE FROM login_attempts WHERE ip_address = :ip'
-        )->execute([':ip' => $ip]);
-    } catch (PDOException) {
-        // Silencieux
-    }
+        db()->prepare('DELETE FROM login_attempts WHERE ip_address = :ip')
+            ->execute([':ip' => $ip]);
+    } catch (PDOException) {}
 }
 
-// ── Token sécurisé (vérification e-mail, reset mdp) ──────────────────────────
-function auth_generate_token(): string
-{
-    return bin2hex(random_bytes(32));
-}
-
-function auth_hash_token(string $token): string
-{
-    return hash('sha256', $token);
-}
+// ── Tokens sécurisés ──────────────────────────────────────────────────────────
+function auth_generate_token(): string  { return bin2hex(random_bytes(32)); }
+function auth_hash_token(string $t): string { return hash('sha256', $t); }
 
 // ── Inscription ───────────────────────────────────────────────────────────────
-/**
- * @return array ['ok' => bool, 'error' => string|null, 'user_id' => int|null, 'token' => string|null]
- */
 function auth_register(string $username, string $email, string $password): array
 {
     $username = trim($username);
     $email    = trim(strtolower($email));
 
-    // Validation
-    if (strlen($username) < 3 || strlen($username) > 60) {
+    if (strlen($username) < 3 || strlen($username) > 60)
         return ['ok' => false, 'error' => "Le nom d'utilisateur doit contenir entre 3 et 60 caractères.", 'user_id' => null, 'token' => null];
-    }
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL))
         return ['ok' => false, 'error' => "Adresse e-mail invalide.", 'user_id' => null, 'token' => null];
-    }
     $pwdErr = auth_validate_password($password);
-    if ($pwdErr) {
+    if ($pwdErr)
         return ['ok' => false, 'error' => $pwdErr, 'user_id' => null, 'token' => null];
-    }
 
-    $hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => BCRYPT_COST]);
-
-    // Token de vérification e-mail
+    $hash            = password_hash($password, PASSWORD_BCRYPT, ['cost' => BCRYPT_COST]);
     $verifyToken     = auth_generate_token();
     $verifyTokenHash = auth_hash_token($verifyToken);
-    $verifyExpiry    = date('Y-m-d H:i:s', time() + 86400); // 24h
+    $verifyExpiry    = date('Y-m-d H:i:s', time() + 86400);
 
     try {
         $pdo  = db();
@@ -195,9 +159,8 @@ function auth_register(string $username, string $email, string $password): array
 
     } catch (PDOException $e) {
         if ($e->getCode() === '23000') {
-            if (str_contains($e->getMessage(), 'uq_users_email')) {
+            if (str_contains($e->getMessage(), 'uq_users_email'))
                 return ['ok' => false, 'error' => "Cette adresse e-mail est déjà utilisée.", 'user_id' => null, 'token' => null];
-            }
             return ['ok' => false, 'error' => "Ce nom d'utilisateur est déjà pris.", 'user_id' => null, 'token' => null];
         }
         error_log('auth_register error: ' . $e->getMessage());
@@ -206,22 +169,14 @@ function auth_register(string $username, string $email, string $password): array
 }
 
 // ── Connexion ─────────────────────────────────────────────────────────────────
-/**
- * @return array ['ok' => bool, 'error' => string|null, 'rate_limited' => bool]
- */
 function auth_login(string $email, string $password): array
 {
     $ip    = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
     $email = trim(strtolower($email));
 
-    // Rate limiting
     if (auth_is_rate_limited($ip)) {
         $decay = defined('RATE_LIMIT_DECAY_MINUTES') ? RATE_LIMIT_DECAY_MINUTES : 15;
-        return [
-            'ok'           => false,
-            'error'        => "Trop de tentatives de connexion. Réessayez dans {$decay} minutes.",
-            'rate_limited' => true,
-        ];
+        return ['ok' => false, 'error' => "Trop de tentatives. Réessayez dans {$decay} minutes.", 'rate_limited' => true];
     }
 
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -230,23 +185,19 @@ function auth_login(string $email, string $password): array
     }
 
     $stmt = db()->prepare(
-        'SELECT id, username, password_hash, email_verified_at
-         FROM users WHERE email = :email LIMIT 1'
+        'SELECT id, username, password_hash, email_verified_at FROM users WHERE email = :email LIMIT 1'
     );
     $stmt->execute([':email' => $email]);
     $user = $stmt->fetch();
 
     if (!$user || !password_verify($password, $user['password_hash'])) {
         auth_record_attempt($ip);
-        // Timing constant pour éviter user enumeration
         if (!$user) password_verify('dummy', '$2y$12$invalid.hash.to.prevent.timing.attack');
         return ['ok' => false, 'error' => "Identifiants incorrects.", 'rate_limited' => false];
     }
 
-    // Succès — on vide les tentatives
     auth_clear_attempts($ip);
 
-    // Rehash si le coût a changé
     if (password_needs_rehash($user['password_hash'], PASSWORD_BCRYPT, ['cost' => BCRYPT_COST])) {
         $newHash = password_hash($password, PASSWORD_BCRYPT, ['cost' => BCRYPT_COST]);
         db()->prepare('UPDATE users SET password_hash = :h WHERE id = :id')
@@ -280,39 +231,26 @@ function auth_logout(): void
 }
 
 // ── Vérification e-mail ───────────────────────────────────────────────────────
-/**
- * Vérifie un token de confirmation d'e-mail.
- * @return array ['ok' => bool, 'error' => string|null]
- */
 function auth_verify_email(string $token): array
 {
     $tokenHash = auth_hash_token($token);
 
     $stmt = db()->prepare(
-        'SELECT id, email_verify_expires
-         FROM users
-         WHERE email_verify_token = :token
-           AND email_verified_at IS NULL
-         LIMIT 1'
+        'SELECT id, email_verify_expires FROM users
+         WHERE email_verify_token = :token AND email_verified_at IS NULL LIMIT 1'
     );
     $stmt->execute([':token' => $tokenHash]);
     $user = $stmt->fetch();
 
-    if (!$user) {
+    if (!$user)
         return ['ok' => false, 'error' => "Lien de vérification invalide ou déjà utilisé."];
-    }
-
-    if (strtotime($user['email_verify_expires']) < time()) {
-        return ['ok' => false, 'error' => "Ce lien a expiré. Demandez un nouveau lien de vérification."];
-    }
+    if (strtotime($user['email_verify_expires']) < time())
+        return ['ok' => false, 'error' => "Ce lien a expiré. Demandez un nouveau lien."];
 
     db()->prepare(
-        'UPDATE users
-         SET email_verified_at = NOW(), email_verify_token = NULL, email_verify_expires = NULL
-         WHERE id = :id'
+        'UPDATE users SET email_verified_at = NOW(), email_verify_token = NULL, email_verify_expires = NULL WHERE id = :id'
     )->execute([':id' => $user['id']]);
 
-    // Mettre à jour la session si l'utilisateur est connecté
     if (auth_check() && (int)$_SESSION[SESSION_USER_ID] === (int)$user['id']) {
         $_SESSION[SESSION_USER_VERIFIED] = true;
     }
@@ -320,9 +258,6 @@ function auth_verify_email(string $token): array
     return ['ok' => true, 'error' => null];
 }
 
-/**
- * Génère un nouveau token de vérification et retourne le token clair.
- */
 function auth_resend_verification(int $userId): array
 {
     $token     = auth_generate_token();
@@ -330,44 +265,33 @@ function auth_resend_verification(int $userId): array
     $expires   = date('Y-m-d H:i:s', time() + 86400);
 
     $stmt = db()->prepare(
-        'UPDATE users
-         SET email_verify_token = :token, email_verify_expires = :expires
+        'UPDATE users SET email_verify_token = :token, email_verify_expires = :expires
          WHERE id = :id AND email_verified_at IS NULL'
     );
     $stmt->execute([':token' => $tokenHash, ':expires' => $expires, ':id' => $userId]);
 
-    if ($stmt->rowCount() === 0) {
+    if ($stmt->rowCount() === 0)
         return ['ok' => false, 'error' => "E-mail déjà vérifié ou utilisateur introuvable.", 'token' => null];
-    }
 
     return ['ok' => true, 'error' => null, 'token' => $token];
 }
 
-// ── Reset de mot de passe ─────────────────────────────────────────────────────
-/**
- * Crée un token de reset et retourne le token clair (à envoyer par e-mail).
- * Utilise un délai constant même si l'e-mail n'existe pas (anti-enumération).
- *
- * @return array ['ok' => bool, 'email' => string|null, 'username' => string|null, 'token' => string|null]
- */
+// ── Reset mot de passe ────────────────────────────────────────────────────────
 function auth_create_password_reset(string $email): array
 {
     $email = trim(strtolower($email));
-
-    // Réponse identique même si e-mail introuvable (anti user enumeration)
-    $stmt = db()->prepare('SELECT id, username FROM users WHERE email = :email LIMIT 1');
+    $stmt  = db()->prepare('SELECT id, username FROM users WHERE email = :email LIMIT 1');
     $stmt->execute([':email' => $email]);
     $user = $stmt->fetch();
 
     if (!$user) {
-        // Simulation du temps de hachage pour éviter le timing attack
         usleep(random_int(100000, 300000));
         return ['ok' => true, 'email' => null, 'username' => null, 'token' => null];
     }
 
     $token     = auth_generate_token();
     $tokenHash = auth_hash_token($token);
-    $expires   = date('Y-m-d H:i:s', time() + 3600); // 1h
+    $expires   = date('Y-m-d H:i:s', time() + 3600);
 
     try {
         db()->prepare(
@@ -375,72 +299,55 @@ function auth_create_password_reset(string $email): array
              VALUES (:uid, :token, :expires)
              ON DUPLICATE KEY UPDATE token_hash = :token2, expires_at = :expires2, created_at = NOW()'
         )->execute([
-            ':uid'     => $user['id'],
-            ':token'   => $tokenHash,
-            ':expires' => $expires,
-            ':token2'  => $tokenHash,
-            ':expires2'=> $expires,
+            ':uid'      => $user['id'],
+            ':token'    => $tokenHash,
+            ':expires'  => $expires,
+            ':token2'   => $tokenHash,
+            ':expires2' => $expires,
         ]);
-
         return ['ok' => true, 'email' => $email, 'username' => $user['username'], 'token' => $token];
-
     } catch (PDOException $e) {
-        error_log('auth_create_password_reset error: ' . $e->getMessage());
+        error_log('auth_create_password_reset: ' . $e->getMessage());
         return ['ok' => false, 'email' => null, 'username' => null, 'token' => null];
     }
 }
 
-/**
- * Réinitialise le mot de passe via un token valide.
- * @return array ['ok' => bool, 'error' => string|null]
- */
 function auth_reset_password(string $token, string $newPassword): array
 {
     $pwdErr = auth_validate_password($newPassword);
     if ($pwdErr) return ['ok' => false, 'error' => $pwdErr];
 
     $tokenHash = auth_hash_token($token);
-
     $stmt = db()->prepare(
-        'SELECT pr.user_id, pr.expires_at
-         FROM password_resets pr
-         WHERE pr.token_hash = :token
-           AND pr.used_at IS NULL
-         LIMIT 1'
+        'SELECT pr.user_id, pr.expires_at FROM password_resets pr
+         WHERE pr.token_hash = :token AND pr.used_at IS NULL LIMIT 1'
     );
     $stmt->execute([':token' => $tokenHash]);
     $reset = $stmt->fetch();
 
-    if (!$reset) {
-        return ['ok' => false, 'error' => "Lien de réinitialisation invalide ou déjà utilisé."];
-    }
-
-    if (strtotime($reset['expires_at']) < time()) {
+    if (!$reset)
+        return ['ok' => false, 'error' => "Lien invalide ou déjà utilisé."];
+    if (strtotime($reset['expires_at']) < time())
         return ['ok' => false, 'error' => "Ce lien a expiré. Effectuez une nouvelle demande."];
-    }
 
     $hash = password_hash($newPassword, PASSWORD_BCRYPT, ['cost' => BCRYPT_COST]);
     $pdo  = db();
-
     $pdo->beginTransaction();
     try {
         $pdo->prepare('UPDATE users SET password_hash = :hash WHERE id = :id')
             ->execute([':hash' => $hash, ':id' => $reset['user_id']]);
-
         $pdo->prepare('UPDATE password_resets SET used_at = NOW() WHERE token_hash = :token')
             ->execute([':token' => $tokenHash]);
-
         $pdo->commit();
         return ['ok' => true, 'error' => null];
-
     } catch (PDOException $e) {
         $pdo->rollBack();
-        error_log('auth_reset_password error: ' . $e->getMessage());
-        return ['ok' => false, 'error' => "Une erreur est survenue. Veuillez réessayer."];
+        error_log('auth_reset_password: ' . $e->getMessage());
+        return ['ok' => false, 'error' => "Erreur serveur. Veuillez réessayer."];
     }
 }
 
-// ── Changement de mot de passe (utilisateur connecté) ────────────────────────
+// ── Changement de mot de passe (connecté) ─────────────────────────────────────
 function auth_change_password(int $userId, string $current, string $newPass): array
 {
     $pwdErr = auth_validate_password($newPass);
@@ -450,9 +357,8 @@ function auth_change_password(int $userId, string $current, string $newPass): ar
     $stmt->execute([':id' => $userId]);
     $user = $stmt->fetch();
 
-    if (!$user || !password_verify($current, $user['password_hash'])) {
+    if (!$user || !password_verify($current, $user['password_hash']))
         return ['ok' => false, 'error' => "Mot de passe actuel incorrect."];
-    }
 
     $hash = password_hash($newPass, PASSWORD_BCRYPT, ['cost' => BCRYPT_COST]);
     db()->prepare('UPDATE users SET password_hash = :hash WHERE id = :id')
@@ -461,17 +367,23 @@ function auth_change_password(int $userId, string $current, string $newPass): ar
     return ['ok' => true, 'error' => null];
 }
 
-// ── Synchronisation du compteur panier en session ─────────────────────────────
+// ── Synchronisation compteur panier ──────────────────────────────────────────
+// CORRECTION : utilise `cart_items` (table réelle du backend/services/cart.php)
+// et non `cart` (table du schéma principal non utilisée par les services)
 function cart_sync_count(): void
 {
     $uid = auth_id();
-    if (!$uid) { $_SESSION['cart_count'] = 0; return; }
+    if (!$uid) {
+        $_SESSION['cart_count'] = 0;
+        return;
+    }
 
     try {
         $stmt = db()->prepare('SELECT COUNT(*) FROM cart_items WHERE user_id = :uid');
         $stmt->execute([':uid' => $uid]);
         $_SESSION['cart_count'] = (int)$stmt->fetchColumn();
     } catch (PDOException) {
+        // La table n'existe peut-être pas encore — on met 0 sans planter
         $_SESSION['cart_count'] = 0;
     }
 }
