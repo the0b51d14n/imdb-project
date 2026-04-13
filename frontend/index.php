@@ -16,7 +16,7 @@ $featuredId    = $mainSection['movies'][0]['id'] ?? null;
 $featuredMovie = $featuredId ? tmdb_get_movie_detail($featuredId) : null;
 $nowPlaying    = tmdb_get_now_playing(12);
 
-$basePath = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
+$basePath = '';
 
 include __DIR__ . '/partials/head.php';
 include __DIR__ . '/partials/loader.php';
@@ -94,7 +94,7 @@ include __DIR__ . '/partials/navbar.php';
     <?php endif; ?>
 
     <div class="hero-actions">
-      <a href="<?= $basePath ?>/pages/movie-detail.php?id=<?= (int)$featuredMovie['id'] ?>" class="btn-primary">
+      <a href="/backend/pages/movie-detail.php?id=<?= (int)$featuredMovie['id'] ?>" class="btn-primary">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>
         </svg>
@@ -133,7 +133,7 @@ include __DIR__ . '/partials/navbar.php';
         <h2 class="section-title"><?= htmlspecialchars($mainSection['label']) ?></h2>
         <p class="section-subtitle"><?= htmlspecialchars($mainSection['subtitle']) ?></p>
       </div>
-      <a href="<?= $basePath ?>/pages/movies.php" class="btn-more">
+      <a href="/backend/pages/movies.php" class="btn-more">
         Voir plus
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -150,7 +150,7 @@ include __DIR__ . '/partials/navbar.php';
       </button>
       <div class="carousel-track">
         <?php foreach ($mainSection['movies'] as $movie): ?>
-          <?php include __DIR__ . '/partials/movie-card.php'; ?>
+          <?php include __DIR__ . '/frontend/partials/movie-card.php'; ?>
         <?php endforeach; ?>
       </div>
       <button class="carousel-btn next" aria-label="Suivant">
@@ -172,7 +172,7 @@ include __DIR__ . '/partials/navbar.php';
         <h2 class="section-title">Sorties récentes</h2>
         <p class="section-subtitle">Films actuellement en salle</p>
       </div>
-      <a href="<?= $basePath ?>/pages/movies.php" class="btn-more">
+      <a href="/backend/pages/movies.php" class="btn-more">
         Voir plus
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -187,7 +187,7 @@ include __DIR__ . '/partials/navbar.php';
       </button>
       <div class="carousel-track">
         <?php foreach ($nowPlaying as $movie): ?>
-          <?php include __DIR__ . '/partials/movie-card.php'; ?>
+          <?php include __DIR__ . '/frontend/partials/movie-card.php'; ?>
         <?php endforeach; ?>
       </div>
       <button class="carousel-btn next" aria-label="Suivant">
@@ -217,7 +217,7 @@ include __DIR__ . '/partials/navbar.php';
 
 <?php include __DIR__ . '/partials/footer.php'; ?>
 
-<script src="<?= $basePath ?>/assets/js/pages/home.js"></script>
+<script src="/assets/js/pages/home.js"></script>
 
 </body>
 </html>

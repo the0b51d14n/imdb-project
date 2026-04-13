@@ -2,6 +2,9 @@
 if (!isset($basePath)) {
     $scriptDir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
     $basePath  = str_ends_with($scriptDir, '/pages') ? dirname($scriptDir) : $scriptDir;
+    if (str_ends_with($basePath, '/backend')) {
+        $basePath = dirname($basePath);
+    }
 }
 ?>
 <footer class="footer">
@@ -19,8 +22,8 @@ if (!isset($basePath)) {
     </p>
 
     <div class="footer-links">
-      <a href="<?= $basePath ?>/pages/movies.php">Films</a>
-      <a href="<?= $basePath ?>/pages/search.php">Recherche</a>
+      <a href="<?= $basePath ?>/backend/pages/movies.php">Films</a>
+      <a href="<?= $basePath ?>/backend/pages/search.php">Recherche</a>
       <a href="<?= $basePath ?>/pages/login.php">Connexion</a>
     </div>
 
@@ -30,3 +33,4 @@ if (!isset($basePath)) {
 <script src="<?= $basePath ?>/assets/js/components/loader.js"></script>
 <script src="<?= $basePath ?>/assets/js/components/navbar.js"></script>
 <script src="<?= $basePath ?>/assets/js/components/logout-button.js"></script>
+<script src="<?= $basePath ?>/assets/js/components/movie-card.js"></script>

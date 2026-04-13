@@ -4,10 +4,6 @@ require_once __DIR__ . '/../config/tmdb.php';
 
 /**
  * Effectue une requête GET vers l'API TMDB.
- *
- * @param  string $endpoint  Ex: '/movie/popular'
- * @param  array  $params    Paramètres GET supplémentaires
- * @return array|null        Données JSON décodées, ou null en cas d'erreur
  */
 function tmdb_get(string $endpoint, array $params = []): ?array
 {
@@ -38,10 +34,6 @@ function tmdb_get(string $endpoint, array $params = []): ?array
 
 /**
  * Construit l'URL complète d'une image TMDB.
- *
- * @param  string|null $path  Chemin retourné par TMDB (ex: '/abc123.jpg')
- * @param  string      $size  Taille (TMDB_POSTER_SIZE, TMDB_BACKDROP_SIZE…)
- * @return string             URL complète ou chaîne vide
  */
 function tmdb_image_url(?string $path, string $size = TMDB_POSTER_SIZE): string
 {
@@ -81,9 +73,6 @@ function tmdb_get_now_playing(int $limit = 10): array
 
 /**
  * Détails complets d'un film (infos + crédits + vidéos).
- *
- * @param  int $movieId  ID TMDB du film
- * @return array|null    Film formaté ou null si introuvable
  */
 function tmdb_get_movie_detail(int $movieId): ?array
 {
@@ -96,6 +85,12 @@ function tmdb_get_movie_detail(int $movieId): ?array
     $cast      = $data['credits']['cast'] ?? [];
     $priceData = tmdb_calculate_price($data, 'movie', $cast);
     $trailer   = tmdb_extract_trailer($data['videos']['results'] ?? []);
+
+    // Signer le prix et le mettre en session pour validation HMAC côté POST
+    if (session_status() === PHP_SESSION_ACTIVE && !empty($priceData['unit'])) {
+        $_SESSION['price_sig'][$data['id']]   = tmdb_sign_price($data['id'], $priceData['unit'], 'movie');
+        $_SESSION['price_cache'][$data['id']] = $priceData['unit'];
+    }
 
     return [
         'id'          => $data['id'],
@@ -122,6 +117,13 @@ function tmdb_format_movies(array $movies): array
 {
     return array_map(function (array $m): array {
         $priceData = tmdb_calculate_price($m, 'movie');
+
+        // Signer le prix en session pour validation HMAC côté ajout panier
+        if (session_status() === PHP_SESSION_ACTIVE && !empty($priceData['unit']) && !empty($m['id'])) {
+            $_SESSION['price_sig'][$m['id']]   = tmdb_sign_price((int)$m['id'], $priceData['unit'], 'movie');
+            $_SESSION['price_cache'][$m['id']] = $priceData['unit'];
+        }
+
         return [
             'id'       => $m['id'],
             'title'    => $m['title'] ?? $m['name'] ?? 'Titre inconnu',
@@ -152,6 +154,12 @@ function tmdb_format_tv(array $shows): array
 {
     return array_map(function (array $s): array {
         $priceData = tmdb_calculate_price($s, 'tv');
+
+        if (session_status() === PHP_SESSION_ACTIVE && !empty($priceData['unit']) && !empty($s['id'])) {
+            $_SESSION['price_sig'][$s['id']]   = tmdb_sign_price((int)$s['id'], $priceData['unit'], 'tv');
+            $_SESSION['price_cache'][$s['id']] = $priceData['unit'];
+        }
+
         return [
             'id'       => $s['id'],
             'title'    => $s['name'] ?? $s['title'] ?? 'Titre inconnu',
@@ -169,10 +177,6 @@ function tmdb_format_tv(array $shows): array
 /**
  * Recommandations basées sur le dernier film acheté.
  * Fallback → tendances de la semaine si aucun achat.
- *
- * @param  int|null $lastPurchasedMovieId  ID TMDB du dernier film acheté
- * @param  int      $limit
- * @return array    ['movies', 'based_on', 'label', 'subtitle']
  */
 function tmdb_get_recommendations(?int $lastPurchasedMovieId, int $limit = 10): array
 {
@@ -208,7 +212,6 @@ function tmdb_get_recommendations(?int $lastPurchasedMovieId, int $limit = 10): 
 
 /**
  * Extrait le réalisateur depuis les crédits crew.
- * (Signature corrigée : accepte directement $crew)
  */
 function tmdb_extract_director(array $crew): string
 {
@@ -222,10 +225,6 @@ function tmdb_extract_director(array $crew): string
 
 /**
  * Extrait la clé YouTube du meilleur trailer disponible.
- * Priorité : trailer officiel FR → trailer officiel EN → premier trailer.
- *
- * @param  array $videos  Résultats TMDB videos
- * @return string|null    Clé YouTube ou null
  */
 function tmdb_extract_trailer(array $videos): ?string
 {

@@ -11,12 +11,11 @@ require_once __DIR__ . '/../services/csrf.php';
 
 auth_start_session();
 
-// Correction : basePath pointe vers la racine
 $basePath = rtrim(str_replace('\\', '/', dirname(dirname(dirname($_SERVER['SCRIPT_NAME'])))), '/');
 
 $movieId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 if (!$movieId || $movieId <= 0) {
-    header('Location: ' . $basePath . '/pages/movies.php');
+    header('Location: ' . $basePath . '/backend/pages/movies.php');
     exit;
 }
 
@@ -28,7 +27,7 @@ if (!$movie) {
     echo '<main><div class="container" style="padding:80px 0;text-align:center;">
       <h1 style="font-size:32px;margin-bottom:12px;">Film introuvable</h1>
       <p style="color:var(--text-muted);">Ce film n\'existe pas ou n\'est plus disponible.</p>
-      <a href="' . $basePath . '/pages/movies.php" class="btn-primary" style="margin-top:24px;display:inline-flex;">Retour au catalogue</a>
+      <a href="' . $basePath . '/backend/pages/movies.php" class="btn-primary" style="margin-top:24px;display:inline-flex;">Retour au catalogue</a>
       </div></main>';
     include __DIR__ . '/../partials/footer.php';
     echo '</body></html>';
@@ -45,11 +44,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'add_t
     }
     csrf_verify();
 
+    // Prix toujours pris côté serveur depuis la session (calculé lors du chargement de la page)
+    $serverPrice = $_SESSION['price_cache'][$movie['id']] ?? $movie['price']['unit'];
+
     $r = cart_add(
         $movie['id'],
         $movie['title'],
         $movie['poster'],
-        $movie['price']['unit']
+        (float)$serverPrice
     );
 
     if ($r['ok']) {
@@ -80,7 +82,6 @@ include __DIR__ . '/../partials/navbar.php';
 
 <main style="padding-top:0;">
 
-  <!-- Hero backdrop -->
   <?php if (!empty($movie['backdrop'])): ?>
   <div class="movie-hero">
     <img src="<?= htmlspecialchars($movie['backdrop']) ?>"
@@ -122,7 +123,7 @@ include __DIR__ . '/../partials/navbar.php';
               </svg>
               Déjà dans le panier
             </div>
-            <a href="<?= $basePath ?>/pages/cart.php" class="btn-ghost" style="width:100%;justify-content:center;">
+            <a href="<?= $basePath ?>/backend/pages/cart.php" class="btn-ghost" style="width:100%;justify-content:center;">
               Voir le panier
             </a>
           <?php else: ?>
@@ -196,7 +197,7 @@ include __DIR__ . '/../partials/navbar.php';
         <?php if (!empty($movie['director'])): ?>
         <p class="movie-director-line">
           Réalisé par&nbsp;
-          <a href="<?= $basePath ?>/pages/director.php?name=<?= urlencode($movie['director']) ?>"
+          <a href="<?= $basePath ?>/backend/pages/director.php?name=<?= urlencode($movie['director']) ?>"
              class="movie-director-link">
             <?= htmlspecialchars($movie['director']) ?>
           </a>
@@ -306,5 +307,6 @@ include __DIR__ . '/../partials/navbar.php';
     });
 })();
 </script>
+<script src="<?= $basePath ?>/assets/js/pages/movie-detail.js"></script>
 </body>
 </html>

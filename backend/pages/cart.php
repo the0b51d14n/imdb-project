@@ -1,22 +1,27 @@
 <?php
 session_start();
- 
+
 require_once __DIR__ . '/../services/auth.php';
 require_once __DIR__ . '/../services/cart.php';
 require_once __DIR__ . '/../services/csrf.php';
- 
-auth_start_session();
- 
-$basePath = rtrim(str_replace('\\', '/', dirname(dirname(dirname($_SERVER['SCRIPT_NAME'])))), '/');
-auth_require($basePath . '/pages/cart.php');
 
+auth_start_session();
+
+$basePath = rtrim(str_replace('\\', '/', dirname(dirname(dirname($_SERVER['SCRIPT_NAME'])))), '/');
+
+// Panier accessible sans connexion (lecture) mais ajout/checkout nécessite auth
 $actionMsg   = null;
 $actionError = null;
- 
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_verify();
     $action = $_POST['action'] ?? '';
- 
+
+    if (!auth_check()) {
+        header('Location: ' . $basePath . '/pages/login.php?redirect=' . urlencode($_SERVER['REQUEST_URI']));
+        exit;
+    }
+
     if ($action === 'remove') {
         $tid = (int)($_POST['tmdb_id'] ?? 0);
         if ($tid > 0) {
@@ -28,25 +33,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         cart_clear();
         $actionMsg = 'Panier vidé.';
     } elseif ($action === 'checkout') {
+        if (!auth_check()) {
+            header('Location: ' . $basePath . '/pages/login.php?redirect=' . urlencode($_SERVER['REQUEST_URI']));
+            exit;
+        }
         $r = cart_checkout();
         if ($r['ok']) {
-            header('Location: ' . $basePath . '/pages/profile.php?order=success');
+            header('Location: ' . $basePath . '/backend/pages/profile.php?order=success');
             exit;
         }
         $actionError = $r['error'];
     }
 }
- 
-$items = cart_get_items();
-var_dump($items);
-die();
-$total = cart_total();
- 
+
+// Si non connecté, panier vide
+$items = auth_check() ? cart_get_items() : [];
+$total = auth_check() ? cart_total() : 0.0;
+
 $pageTitle  = 'Mon panier';
 $pageCSS    = 'pages/cart.css';
 $pageDesc   = 'Votre panier Supinfo.TV.';
 $activePage = 'cart';
- 
+
 include __DIR__ . '/../partials/head.php';
 include __DIR__ . '/../partials/loader.php';
 include __DIR__ . '/../partials/navbar.php';
@@ -69,7 +77,21 @@ include __DIR__ . '/../partials/navbar.php';
   </div>
   <?php endif; ?>
 
-  <?php if (empty($items)): ?>
+  <?php if (!auth_check()): ?>
+  <div class="cart-empty">
+    <div class="cart-empty-icon">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <path d="M16 10a4 4 0 0 1-8 0"/>
+      </svg>
+    </div>
+    <h1 class="cart-empty-title">Connectez-vous pour voir votre panier</h1>
+    <p class="cart-empty-sub">Créez un compte ou connectez-vous pour ajouter des films à votre collection.</p>
+    <a href="<?= $basePath ?>/pages/login.php" class="btn-primary">Se connecter</a>
+  </div>
+
+  <?php elseif (empty($items)): ?>
   <div class="cart-empty">
     <div class="cart-empty-icon">
       <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
@@ -189,7 +211,7 @@ include __DIR__ . '/../partials/navbar.php';
         <form method="POST" action="">
           <?= csrf_field() ?>
           <input type="hidden" name="action" value="checkout">
-          <button type="submit" class="btn-order">
+          <button type="submit" class="btn-order" id="btn-checkout">
             <span class="default">Commander</span>
             <span class="success">
               Commande envoyée

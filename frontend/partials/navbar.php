@@ -2,6 +2,10 @@
 if (!isset($basePath)) {
     $scriptDir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
     $basePath  = str_ends_with($scriptDir, '/pages') ? dirname($scriptDir) : $scriptDir;
+    // backend/pages → remonter encore d'un niveau
+    if (str_ends_with($basePath, '/backend')) {
+        $basePath = dirname($basePath);
+    }
 }
 ?>
 <nav class="navbar" id="navbar">
@@ -12,20 +16,20 @@ if (!isset($basePath)) {
     </a>
 
     <div class="navbar-links" id="navbar-links">
-      <a href="<?= $basePath ?>/index.php"        class="<?= ($activePage??'')==='home'   ? 'active' : '' ?>">Accueil</a>
-      <a href="<?= $basePath ?>/pages/movies.php" class="<?= ($activePage??'')==='movies' ? 'active' : '' ?>">Films</a>
-      <a href="<?= $basePath ?>/pages/search.php" class="<?= ($activePage??'')==='search' ? 'active' : '' ?>">Recherche</a>
+      <a href="<?= $basePath ?>/index.php"               class="<?= ($activePage??'')==='home'   ? 'active' : '' ?>">Accueil</a>
+      <a href="<?= $basePath ?>/backend/pages/movies.php" class="<?= ($activePage??'')==='movies' ? 'active' : '' ?>">Films</a>
+      <a href="<?= $basePath ?>/backend/pages/search.php" class="<?= ($activePage??'')==='search' ? 'active' : '' ?>">Recherche</a>
     </div>
 
     <div class="navbar-right">
 
-      <a href="<?= $basePath ?>/pages/search.php" class="navbar-search-btn" title="Rechercher">
+      <a href="<?= $basePath ?>/backend/pages/search.php" class="navbar-search-btn" title="Rechercher">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
         </svg>
       </a>
 
-      <a href="<?= $basePath ?>/pages/cart.php" class="navbar-cart" title="Panier">
+      <a href="<?= $basePath ?>/backend/pages/cart.php" class="navbar-cart" title="Panier">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
           <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
           <line x1="3" y1="6" x2="21" y2="6"/>
@@ -40,11 +44,11 @@ if (!isset($basePath)) {
       </a>
 
       <?php if (!empty($_SESSION['user_id'])): ?>
-        <a href="<?= $basePath ?>/pages/profile.php" class="btn-nav-login">
+        <a href="<?= $basePath ?>/backend/pages/profile.php" class="btn-nav-login">
           <?= htmlspecialchars($_SESSION['user_name'] ?? 'Profil') ?>
         </a>
         <button class="logout-btn-animated" id="logout-btn"
-                data-href="<?= $basePath ?>/pages/logout.php">
+                data-href="<?= $basePath ?>/backend/pages/logout.php">
           <svg class="logout-doorway" viewBox="0 0 100 100">
             <path d="M93.4 86.3H58.6c-1.9 0-3.4-1.5-3.4-3.4V17.1c0-1.9 1.5-3.4 3.4-3.4h34.8c1.9 0 3.4 1.5 3.4 3.4v65.8c0 1.9-1.5 3.4-3.4 3.4z"/>
             <path class="logout-bang" d="M40.5 43.7L26.6 31.4l-2.5 6.7zM41.9 50.4l-19.5-4-1.4 6.3zM40 57.4l-17.7 3.9 3.9 5.7z"/>
@@ -77,6 +81,9 @@ if (!isset($basePath)) {
         </button>
       <?php else: ?>
         <a href="<?= $basePath ?>/pages/login.php" class="btn-nav-login">Connexion</a>
+        <a href="<?= $basePath ?>/pages/login.php?mode=register" class="btn-nav-register">
+          <strong>S'inscrire</strong>
+        </a>
       <?php endif; ?>
     </div>
 
