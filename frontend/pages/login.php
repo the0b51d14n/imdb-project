@@ -1,7 +1,6 @@
 <?php
 // ══════════════════════════════════════════════════════════════════════════════
 //  frontend/pages/login.php — Supinfo.TV
-//  Formulaire de connexion / inscription avec validation MX et messages détaillés.
 // ══════════════════════════════════════════════════════════════════════════════
 
 session_start();
@@ -32,20 +31,36 @@ $authNotice    = $_SESSION['auth_notice'] ?? null;
 $authOld       = [];
 unset($_SESSION['auth_notice']);
 
-// ── Validation email + vérification MX ───────────────────────────────────────
-function validate_email_with_mx(string $email): array
+// ── Validation email uniquement pour l'inscription (MX + blacklist) ───────────
+function validate_email_for_register(string $email): array
 {
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         return ['ok' => false, 'error' => "Le format de l'adresse e-mail est invalide."];
     }
 
-    $domain = substr(strrchr($email, '@'), 1);
+    $domain = strtolower(substr(strrchr($email, '@'), 1));
 
-    // Vérifie enregistrement MX puis A en fallback
-    if (!checkdnsrr($domain, 'MX') && !checkdnsrr($domain, 'A')) {
+    $disposable = [
+        'mailinator.com','guerrillamail.com','tempmail.com','throwam.com',
+        'yopmail.com','sharklasers.com','grr.la','guerrillamail.info',
+        'guerrillamail.biz','guerrillamail.de','guerrillamail.net',
+        'guerrillamail.org','spam4.me','trashmail.com','trashmail.me',
+        'trashmail.net','dispostable.com','fakeinbox.com','mailnull.com',
+        'maildrop.cc','tempr.email','discard.email','mailnesia.com',
+        'filzmail.com','getairmail.com','trashmail.at','trashmail.io',
+        'spambox.us','mintemail.com','tempinbox.com','fakemail.net',
+        'temp-mail.org','mailtemp.info','getonemail.com','despam.it',
+    ];
+
+    if (in_array($domain, $disposable, true)) {
+        return ['ok' => false, 'error' => "Les adresses e-mail temporaires ne sont pas acceptées."];
+    }
+
+    // Vérification MX uniquement — sans fallback A record
+    if (!checkdnsrr($domain, 'MX')) {
         return [
             'ok'    => false,
-            'error' => "Le domaine <strong>@{$domain}</strong> n'existe pas ou n'accepte pas d'e-mails. Vérifiez votre adresse."
+            'error' => "Le domaine <strong>@{$domain}</strong> n'accepte pas d'e-mails. Vérifiez votre adresse."
         ];
     }
 
@@ -62,6 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
 
         // ── CONNEXION ─────────────────────────────────────────────────────────
+        // Pas de vérification MX ici — inutile et bloquant pour des comptes existants
         if ($action === 'login') {
             $email    = trim($_POST['email']    ?? '');
             $password = $_POST['password']      ?? '';
@@ -69,32 +85,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (empty($email) || empty($password)) {
                 $loginError = "Veuillez remplir tous les champs.";
+            } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $loginError = "Format d'adresse e-mail invalide.";
             } else {
-                $emailCheck = validate_email_with_mx($email);
-                if (!$emailCheck['ok']) {
-                    $loginError = $emailCheck['error'];
+                $result = auth_login($email, $password);
+                if ($result['ok']) {
+                    $redirect = filter_var($_POST['redirect'] ?? '', FILTER_SANITIZE_URL);
+                    $dest = ($redirect && str_starts_with($redirect, '/')) ? $redirect : $basePath . '/index.php';
+                    header('Location: ' . $dest);
+                    exit;
+                } elseif (!empty($result['rate_limited'])) {
+                    $loginError = "Trop de tentatives échouées. Réessayez dans quelques minutes.";
                 } else {
-                    $stmt = db()->prepare('SELECT id, password_hash FROM users WHERE email = :email LIMIT 1');
-                    $stmt->execute([':email' => strtolower($email)]);
-                    $user = $stmt->fetch();
-
-                    if (!$user) {
-                        $loginError = "Aucun compte n'est associé à cette adresse e-mail. <a href=\"{$basePath}/pages/login.php?mode=register\" style=\"color:var(--accent);text-decoration:underline;\">Créer un compte ?</a>";
-                    } elseif (!password_verify($password, $user['password_hash'])) {
-                        $loginError = "Mot de passe incorrect. Vous pouvez le <a href=\"{$basePath}/pages/forgot-password.php\" style=\"color:var(--accent);text-decoration:underline;\">réinitialiser ici</a>.";
-                    } else {
-                        $result = auth_login($email, $password);
-                        if ($result['ok']) {
-                            $redirect = filter_var($_POST['redirect'] ?? '', FILTER_SANITIZE_URL);
-                            $dest = ($redirect && str_starts_with($redirect, '/')) ? $redirect : $basePath . '/index.php';
-                            header('Location: ' . $dest);
-                            exit;
-                        } elseif (!empty($result['rate_limited'])) {
-                            $loginError = "Trop de tentatives échouées. Veuillez réessayer dans quelques minutes.";
-                        } else {
-                            $loginError = $result['error'];
-                        }
-                    }
+                    $loginError = "Identifiants incorrects.";
                 }
             }
         }
@@ -113,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } elseif ($password !== $password2) {
                 $registerError = "Les mots de passe ne correspondent pas.";
             } else {
-                $emailCheck = validate_email_with_mx($email);
+                $emailCheck = validate_email_for_register($email);
                 if (!$emailCheck['ok']) {
                     $registerError = $emailCheck['error'];
                 } else {
@@ -121,10 +124,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $result = auth_register($username, $email, $password);
 
                     if ($result['ok']) {
-                        if ($result['token']) {
-                            mailer_send_verification($email, $username, $result['token']);
+                        if (!empty($result['token'])) {
+                            $mailResult = mailer_send_verification($email, $username, $result['token']);
+                            if (!$mailResult['ok']) {
+                                error_log('[LOGIN] Echec envoi mail vérification : ' . ($mailResult['error'] ?? 'inconnu'));
+                            }
                         }
-                        $_SESSION['auth_notice'] = "✅ Compte créé ! Un e-mail de vérification a été envoyé à <strong>{$email}</strong>. Cliquez sur le lien pour activer votre compte.";
+                        $_SESSION['auth_notice'] = "✅ Compte créé ! Un e-mail de vérification a été envoyé à <strong>" . htmlspecialchars($email) . "</strong>. Cliquez sur le lien pour activer votre compte.";
                         header('Location: ' . $basePath . '/pages/login.php');
                         exit;
                     } else {
@@ -159,11 +165,29 @@ include __DIR__ . '/../partials/loader.php';
     border-radius: var(--radius-sm);
     animation: fadeInStatus 0.2s ease;
 }
-.email-status.show   { display: flex; }
-.email-status.valid   { color: var(--accent); background: rgba(87,204,153,0.1); border: 1px solid rgba(87,204,153,0.3); }
-.email-status.invalid { color: var(--danger); background: rgba(224,90,106,0.08); border: 1px solid rgba(224,90,106,0.3); }
-.email-status.checking{ color: var(--text-muted); background: var(--surface-2); border: 1px solid var(--border); }
-@keyframes fadeInStatus { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+.email-status.show     { display: flex; }
+.email-status.invalid  { color: var(--danger);     background: rgba(224,90,106,0.08);  border: 1px solid rgba(224,90,106,0.3); }
+.email-status.checking { color: var(--text-muted); background: var(--surface-2);       border: 1px solid var(--border); }
+
+.pwd-status {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    margin-top: 5px;
+    margin-bottom: 4px;
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    animation: fadeInStatus 0.2s ease;
+}
+.pwd-status.show    { display: flex; }
+.pwd-status.valid   { color: var(--accent); background: rgba(87,204,153,0.1);  border: 1px solid rgba(87,204,153,0.3); }
+.pwd-status.invalid { color: var(--danger); background: rgba(224,90,106,0.08); border: 1px solid rgba(224,90,106,0.3); }
+
+@keyframes fadeInStatus {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
 
 .auth-notice {
     position: fixed;
@@ -225,12 +249,11 @@ include __DIR__ . '/../partials/loader.php';
           <?php endif; ?>
 
           <div class="input-box">
-            <input type="email" name="email" id="login-email"
-                   placeholder="Adresse e-mail" required autocomplete="email"
+            <input type="email" name="email" placeholder="Adresse e-mail"
+                   required autocomplete="email"
                    value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
             <i class="bx bxs-envelope"></i>
           </div>
-          <div class="email-status" id="login-email-status"></div>
 
           <div class="input-box">
             <input type="password" name="password" placeholder="Mot de passe"
@@ -247,7 +270,7 @@ include __DIR__ . '/../partials/loader.php';
           <div class="auth-divider">ou continuer avec</div>
           <div class="social-icons">
             <a href="#" title="Google"><i class="bx bxl-google"></i></a>
-            <a href="#" title="GitHub"><i class="bx bxl-github"></i></a>
+            <a href="#" title="Facebook"><i class="bx bxl-facebook"></i></a>
           </div>
         </form>
       </div>
@@ -292,14 +315,14 @@ include __DIR__ . '/../partials/loader.php';
                    required autocomplete="new-password" minlength="8">
             <i class="bx bxs-lock-alt"></i>
           </div>
-          <div class="email-status" id="pwd-match-status"></div>
+          <div class="pwd-status" id="pwd-match-status"></div>
 
           <button type="submit" class="auth-btn">Créer un compte</button>
 
           <div class="auth-divider">ou continuer avec</div>
           <div class="social-icons">
             <a href="#" title="Google"><i class="bx bxl-google"></i></a>
-            <a href="#" title="GitHub"><i class="bx bxl-github"></i></a>
+            <a href="#" title="Facebook"><i class="bx bxl-facebook"></i></a>
           </div>
         </form>
       </div>
@@ -340,96 +363,100 @@ include __DIR__ . '/../partials/loader.php';
         return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), delay); };
     }
 
-    function showStatus(el, state, msg) {
+    function showEmailStatus(state, msg) {
+        const el = document.getElementById('register-email-status');
+        if (!el) return;
         el.className = 'email-status show ' + state;
-        const icons = { valid: '✅', invalid: '❌', checking: '⏳' };
-        el.innerHTML = icons[state] + ' ' + msg;
+        el.innerHTML = { invalid: '❌', checking: '⏳' }[state] + ' ' + msg;
     }
 
-    function hideStatus(el) {
+    function hideEmailStatus() {
+        const el = document.getElementById('register-email-status');
+        if (!el) return;
         el.className = 'email-status';
         el.innerHTML = '';
     }
 
-    function validFormat(email) {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
-    }
+    // Domaines jetables — erreur immédiate
+    const DISPOSABLE = new Set([
+        'mailinator.com','guerrillamail.com','tempmail.com','throwam.com',
+        'yopmail.com','sharklasers.com','grr.la','spam4.me','trashmail.com',
+        'trashmail.me','trashmail.net','dispostable.com','fakeinbox.com',
+        'maildrop.cc','tempr.email','discard.email','mailnesia.com',
+        'filzmail.com','getairmail.com','spambox.us','mintemail.com',
+        'tempinbox.com','fakemail.net','temp-mail.org','mailtemp.info',
+    ]);
 
-    // Domaines toujours valides (pas besoin d'appel DNS)
+    // Domaines connus valides — pas besoin d'appel réseau
     const KNOWN_VALID = new Set([
         'gmail.com','googlemail.com','yahoo.com','yahoo.fr','yahoo.co.uk',
         'hotmail.com','hotmail.fr','outlook.com','outlook.fr','live.com',
         'live.fr','icloud.com','me.com','mac.com','protonmail.com',
         'proton.me','laposte.net','orange.fr','sfr.fr','free.fr',
-        'bbox.fr','wanadoo.fr','numericable.fr','bouyguestelecom.fr',
+        'bbox.fr','wanadoo.fr','bouyguestelecom.fr',
     ]);
 
-    // ── Validation email avec DNS over HTTPS ──────────────────────────────
-    function initEmailValidation(inputId, statusId) {
-        const input  = document.getElementById(inputId);
-        const status = document.getElementById(statusId);
-        if (!input || !status) return;
+    // ── Validation email inscription ──────────────────────────────────────
+    const registerEmailInput = document.getElementById('register-email');
 
-        const check = debounce(async (value) => {
-            if (!value) { hideStatus(status); return; }
-            if (!validFormat(value)) {
-                showStatus(status, 'invalid', "Format d'adresse e-mail invalide.");
+    if (registerEmailInput) {
+        const checkEmail = debounce(async (value) => {
+            if (!value) { hideEmailStatus(); return; }
+
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value)) {
+                showEmailStatus('invalid', "Format d'adresse e-mail invalide.");
                 return;
             }
 
             const domain = value.split('@')[1].toLowerCase();
 
-            if (KNOWN_VALID.has(domain)) {
-                showStatus(status, 'valid', 'Adresse e-mail valide ✓');
+            if (DISPOSABLE.has(domain)) {
+                showEmailStatus('invalid', 'Les adresses e-mail temporaires ne sont pas acceptées.');
                 return;
             }
 
-            showStatus(status, 'checking', 'Vérification du domaine…');
+            if (KNOWN_VALID.has(domain)) {
+                hideEmailStatus(); // domaine connu → pas de feedback inutile
+                return;
+            }
+
+            showEmailStatus('checking', 'Vérification du domaine…');
 
             try {
-                // Vérifie MX d'abord
-                let res  = await fetch('https://dns.google/resolve?name=' + encodeURIComponent(domain) + '&type=MX');
-                let data = await res.json();
+                // MX uniquement — pas de fallback A record
+                const res  = await fetch('https://dns.google/resolve?name=' + encodeURIComponent(domain) + '&type=MX');
+                const data = await res.json();
 
                 if (data.Answer && data.Answer.length > 0) {
-                    showStatus(status, 'valid', 'Adresse e-mail valide ✓');
-                    return;
-                }
-
-                // Fallback sur enregistrement A
-                res  = await fetch('https://dns.google/resolve?name=' + encodeURIComponent(domain) + '&type=A');
-                data = await res.json();
-
-                if (data.Answer && data.Answer.length > 0) {
-                    showStatus(status, 'valid', 'Adresse e-mail valide ✓');
+                    hideEmailStatus(); // valide → on n'affiche rien de trompeur
                 } else {
-                    showStatus(status, 'invalid',
-                        'Le domaine <strong>@' + domain + '</strong> n\'existe pas ou n\'accepte pas d\'e-mails.');
+                    showEmailStatus('invalid', 'Le domaine <strong>@' + domain + '</strong> n\'accepte pas d\'e-mails.');
                 }
             } catch {
-                // Erreur réseau → on laisse passer, PHP vérifiera côté serveur
-                showStatus(status, 'valid', 'Adresse e-mail valide ✓');
+                hideEmailStatus(); // erreur réseau → PHP tranchera
             }
         }, 700);
 
-        input.addEventListener('input', (e) => check(e.target.value.trim()));
-        input.addEventListener('blur',  (e) => check(e.target.value.trim()));
+        registerEmailInput.addEventListener('input', (e) => checkEmail(e.target.value.trim()));
+        registerEmailInput.addEventListener('blur',  (e) => checkEmail(e.target.value.trim()));
     }
 
-    initEmailValidation('login-email',    'login-email-status');
-    initEmailValidation('register-email', 'register-email-status');
-
-    // ── Vérification correspondance mots de passe ─────────────────────────
+    // ── Correspondance mots de passe ──────────────────────────────────────
     const pwd1  = document.getElementById('reg-pwd');
     const pwd2  = document.getElementById('reg-pwd2');
     const pwdSt = document.getElementById('pwd-match-status');
 
     function checkPwd() {
-        if (!pwd2 || !pwd2.value) { hideStatus(pwdSt); return; }
+        if (!pwdSt || !pwd2 || !pwd2.value) {
+            if (pwdSt) { pwdSt.className = 'pwd-status'; pwdSt.innerHTML = ''; }
+            return;
+        }
         if (pwd1.value === pwd2.value) {
-            showStatus(pwdSt, 'valid', 'Les mots de passe correspondent.');
+            pwdSt.className = 'pwd-status show valid';
+            pwdSt.innerHTML = '✅ Les mots de passe correspondent.';
         } else {
-            showStatus(pwdSt, 'invalid', 'Les mots de passe ne correspondent pas.');
+            pwdSt.className = 'pwd-status show invalid';
+            pwdSt.innerHTML = '❌ Les mots de passe ne correspondent pas.';
         }
     }
     pwd1?.addEventListener('input', checkPwd);
@@ -440,7 +467,7 @@ include __DIR__ . '/../partials/loader.php';
     if (notice) {
         setTimeout(() => {
             notice.style.transition = 'opacity 0.5s ease';
-            notice.style.opacity = '0';
+            notice.style.opacity    = '0';
             setTimeout(() => notice.remove(), 500);
         }, 7000);
     }

@@ -98,8 +98,9 @@ function auth_validate_email_domain(string $email): ?string
         return "Les adresses e-mail temporaires ne sont pas acceptées.";
     }
 
-    // Vérification DNS : le domaine doit avoir un enregistrement MX ou A réel
-    if (!checkdnsrr($domain, 'MX') && !checkdnsrr($domain, 'A')) {
+    // Vérification DNS : le domaine doit avoir un enregistrement MX réel
+    // On ne fait PAS de fallback sur A record — un domaine sans MX ne peut pas recevoir d'e-mails
+    if (!checkdnsrr($domain, 'MX')) {
         return "Adresse e-mail invalide.";
     }
 
