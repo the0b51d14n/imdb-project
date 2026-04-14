@@ -1,0 +1,223 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   frontend/assets/css/components/advanced-filters.css — Supinfo.TV
+   Filtres avancés pour le catalogue : tri, année, note, prix
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Barre de filtres ─────────────────────────────────────────────────────── */
+.filters-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 16px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    margin-bottom: 28px;
+}
+
+.filters-bar-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    flex-shrink: 0;
+    margin-right: 4px;
+}
+
+/* ── Groupe de filtres ────────────────────────────────────────────────────── */
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.filter-group+.filter-group::before {
+    content: '';
+    width: 1px;
+    height: 20px;
+    background: var(--border);
+    margin-right: 6px;
+}
+
+.filter-group-label {
+    font-size: 11px;
+    color: var(--text-faint);
+    white-space: nowrap;
+}
+
+/* ── Select de filtre ─────────────────────────────────────────────────────── */
+.filter-select {
+    appearance: none;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    font-family: var(--font);
+    font-size: 12px;
+    padding: 7px 32px 7px 12px;
+    cursor: pointer;
+    outline: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236db8b9' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    transition: border-color var(--transition), color var(--transition);
+    min-width: 120px;
+}
+
+.filter-select:hover {
+    border-color: var(--border-bright);
+    color: var(--text);
+}
+
+.filter-select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+/* ── Range slider (prix / note) ───────────────────────────────────────────── */
+.filter-range-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-range {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100px;
+    height: 3px;
+    border-radius: 99px;
+    background: var(--border);
+    outline: none;
+    cursor: pointer;
+}
+
+.filter-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    box-shadow: 0 0 6px var(--accent-glow);
+    transition: transform var(--transition-snap), box-shadow var(--transition);
+}
+
+.filter-range::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.filter-range::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 0 6px var(--accent-glow);
+}
+
+.filter-range-value {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 500;
+    min-width: 32px;
+    text-align: right;
+}
+
+/* ── Bouton réinitialiser les filtres ─────────────────────────────────────── */
+.filter-reset {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-faint);
+    font-family: var(--font);
+    font-size: 11px;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: all var(--transition);
+    white-space: nowrap;
+}
+
+.filter-reset:hover {
+    color: var(--danger);
+    border-color: var(--danger);
+    background: rgba(224, 90, 106, 0.06);
+}
+
+.filter-reset:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* ── Active state indicators ──────────────────────────────────────────────── */
+.filter-active-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+/* ── État "Aucun résultat avec ces filtres" ───────────────────────────────── */
+.filters-no-results {
+    text-align: center;
+    padding: 60px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+}
+
+.filters-no-results-icon {
+    font-size: 40px;
+    margin-bottom: 16px;
+    opacity: 0.4;
+}
+
+.filters-no-results h3 {
+    font-size: 18px;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
+.filters-no-results p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .filters-bar {
+        padding: 12px 14px;
+        gap: 8px;
+    }
+
+    .filter-group+.filter-group::before {
+        display: none;
+    }
+
+    .filter-range {
+        width: 70px;
+    }
+
+    .filter-reset {
+        margin-left: 0;
+        width: 100%;
+        justify-content: center;
+    }
+}

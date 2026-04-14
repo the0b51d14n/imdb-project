@@ -1,4 +1,5 @@
 <?php
+// frontend/partials/footer.php — v2 (avec nouveaux composants)
 if (!isset($basePath)) {
     $scriptDir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
     $basePath  = str_ends_with($scriptDir, '/pages') ? dirname($scriptDir) : $scriptDir;
@@ -24,13 +25,25 @@ if (!isset($basePath)) {
     <div class="footer-links">
       <a href="<?= $basePath ?>/backend/pages/movies.php">Films</a>
       <a href="<?= $basePath ?>/backend/pages/search.php">Recherche</a>
+      <?php if (!empty($_SESSION['user_id'])): ?>
+      <a href="<?= $basePath ?>/backend/pages/watchlist.php">Ma liste</a>
+      <?php endif; ?>
       <a href="<?= $basePath ?>/pages/login.php">Connexion</a>
     </div>
 
   </div>
 </footer>
 
+<!-- ── Scripts core ──────────────────────────────────────────────────────── -->
 <script src="<?= $basePath ?>/assets/js/components/loader.js"></script>
 <script src="<?= $basePath ?>/assets/js/components/navbar.js"></script>
 <script src="<?= $basePath ?>/assets/js/components/logout-button.js"></script>
 <script src="<?= $basePath ?>/assets/js/components/movie-card.js"></script>
+
+<!-- ── Scripts v2 ────────────────────────────────────────────────────────── -->
+<script src="<?= $basePath ?>/assets/js/components/blur-up.js"></script>
+<script src="<?= $basePath ?>/assets/js/components/search-autocomplete.js"></script>
+<script src="<?= $basePath ?>/assets/js/components/cart-ajax.js"></script>
+<?php if (!empty($_SESSION['user_id'])): ?>
+<script src="<?= $basePath ?>/assets/js/components/watchlist-button.js"></script>
+<?php endif; ?>

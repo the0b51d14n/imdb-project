@@ -5,6 +5,15 @@ Données fournies par l'API [TMDB](https://www.themoviedb.org/).
 
 ---
 
+## Équipe
+
+| Rôle | Nom |
+|---|---|
+| Responsable Design & Frontend | **Théo ANDRIMANANRISOA** |
+| Responsable & Liaison Backend | **Florian LABITTE** |
+
+---
+
 ## Stack technique
 
 | Couche | Technologie |
@@ -108,21 +117,46 @@ docker compose restart nginx
 
 ```
 supinfotv/
-├── .env.example              # Template de configuration (pas de secrets)
+├── .env.example                              # Template de configuration (pas de secrets)
+├── .gitignore
 ├── .github/
 │   └── workflows/
-│       └── security.yml      # CI/CD — audit sécurité automatique
+│       └── security.yml                      # CI/CD — audit sécurité automatique
+├── build.php                                 # [v2] Script de build CSS/JS (minification)
+├── pre-commit                                # Hook Git de sécurité
+├── docker-compose.yml
+│
+├── docker/
+│   ├── mysql/
+│   │   └── my.cnf
+│   ├── nginx/
+│   │   └── default.conf                      # [v2] Routes API + gestion 404
+│   └── php/
+│       ├── Dockerfile
+│       └── php.ini
+│
 ├── backend/
+│   ├── Database.sql                          # Schéma principal
+│   ├── Database_patch_auth.sql               # Patch v1 — auth renforcée
+│   ├── Database_patch_v2.sql                 # [v2] Cache, watchlist, logs, notations
+│   │
+│   ├── api/                                  # [v2] Endpoints JSON (AJAX)
+│   │   ├── cart.php                          # [v2] Panier : add / remove / count / check
+│   │   ├── search.php                        # [v2] Autocomplete recherche
+│   │   ├── watchlist.php                     # [v2] Liste de souhaits
+│   │   └── ratings.php                       # [v2] Notations films
+│   │
 │   ├── config/
-│   │   ├── database.php      # Connexion PDO MySQL (singleton)
-│   │   ├── mail.php          # Config SMTP
-│   │   ├── security.php      # Headers HTTP + constantes sécurité
-│   │   └── tmdb.php          # Alias → frontend/config/tmdb.php
+│   │   ├── database.php                      # Connexion PDO MySQL (singleton)
+│   │   ├── mail.php                          # Config SMTP
+│   │   ├── security.php                      # Headers HTTP + constantes sécurité
+│   │   └── tmdb.php                          # Alias → frontend/config/tmdb.php
+│   │
 │   ├── pages/
-│   │   ├── cart.php          # Panier (authentifié)
-│   │   ├── director.php      # Filmographie d'un réalisateur
+│   │   ├── cart.php                          # Panier (authentifié)
+│   │   ├── director.php                      # Filmographie d'un réalisateur
 │   │   ├── forgot-password.php
-│   │   ├── login.php         # Handler POST connexion + inscription
+│   │   ├── login.php                         # Handler POST connexion + inscription
 │   │   ├── logout.php
 │   │   ├── movie-detail.php
 │   │   ├── movies.php
@@ -131,37 +165,116 @@ supinfotv/
 │   │   ├── resend-verification.php
 │   │   ├── reset-password.php
 │   │   ├── search.php
-│   │   └── verify-email.php
-│   ├── partials/             # Alias vers frontend/partials/
-│   ├── services/
-│   │   ├── auth.php          # Authentification complète
-│   │   ├── cart.php          # Panier (DB)
-│   │   ├── csrf.php          # Protection CSRF
-│   │   ├── mailer.php        # Envoi e-mail SMTP natif
-│   │   ├── orders.php        # Commandes
-│   │   └── tmdb-service.php  # Alias → frontend/services/
-│   ├── Database.sql          # Schéma principal
-│   └── Database_patch_auth.sql # Patch tables auth renforcées
-├── docker/
-│   ├── mysql/my.cnf
-│   ├── nginx/default.conf
-│   └── php/
-│       ├── Dockerfile
-│       └── php.ini
-├── frontend/
-│   ├── assets/
-│   │   ├── css/              # app.css + composants + pages
-│   │   └── js/               # Composants et pages JS
-│   ├── config/
-│   │   └── tmdb.php          # Constantes TMDB + calcul prix HMAC
-│   ├── pages/                # Pages visiteur (sans auth requise)
-│   ├── partials/             # head, navbar, footer, loader, movie-card
+│   │   ├── verify-email.php
+│   │   └── watchlist.php                     # [v2] Page "Ma liste"
+│   │
+│   ├── partials/                             # Alias vers frontend/partials/
+│   │
 │   └── services/
-│       └── tmdb-service.php  # Appels API TMDB
-├── index.php                 # Page d'accueil
-├── pre-commit                # Hook Git de sécurité
-└── docker-compose.yml
+│       ├── auth.php                          # Authentification complète
+│       ├── cart.php                          # Panier (DB)
+│       ├── csrf.php                          # Protection CSRF
+│       ├── mailer.php                        # Envoi e-mail SMTP natif
+│       ├── orders.php                        # Commandes
+│       ├── tmdb-service.php                  # Alias → frontend/services/
+│       ├── activity-log.php                  # [v2] Logs d'activité utilisateur
+│       ├── ratings.php                       # [v2] Service notation films
+│       ├── tmdb-cache.php                    # [v2] Cache TMDB en base
+│       └── watchlist.php                     # [v2] Service liste de souhaits
+│
+└── frontend/
+    ├── index.php                             # Page d'accueil
+    │
+    ├── config/
+    │   └── tmdb.php                          # Constantes TMDB + calcul prix HMAC
+    │
+    ├── pages/
+    │   ├── 404.php                           # [v2] Page 404 personnalisée
+    │   ├── cart.php
+    │   ├── director.php
+    │   ├── error.php                         # [v2] Page 500 personnalisée
+    │   ├── forgot-password.php
+    │   ├── home.php
+    │   ├── login.php
+    │   ├── logout.php
+    │   ├── movie-detail.php
+    │   ├── movies.php
+    │   ├── profile.php
+    │   ├── resend-verification.php
+    │   ├── reset-password.php
+    │   └── search.php
+    │
+    ├── partials/
+    │   ├── auth-buttons.php
+    │   ├── footer.php
+    │   ├── head.php
+    │   ├── loader.php
+    │   ├── movie-card.php
+    │   └── navbar.php
+    │
+    ├── services/
+    │   └── tmdb-service.php                  # Appels API TMDB
+    │
+    └── assets/
+        ├── dist/                             # [v2] Assets minifiés (généré par build.php)
+        │   ├── app.min.css
+        │   └── components.min.js
+        │
+        ├── images/
+        │   └── brand/
+        │       ├── favicon.ico
+        │       └── logo-blanc.png
+        │
+        ├── css/
+        │   ├── app.css                       # Point d'entrée CSS global
+        │   ├── base/
+        │   │   ├── layout.css
+        │   │   ├── reset.css
+        │   │   ├── typography.css
+        │   │   └── variables.css
+        │   ├── components/
+        │   │   ├── advanced-filters.css      # [v2] Filtres avancés
+        │   │   ├── buttons.css
+        │   │   ├── footer.css
+        │   │   ├── forms.css
+        │   │   ├── loader.css
+        │   │   ├── logout-button.css
+        │   │   ├── movie-card.css
+        │   │   ├── navbar.css
+        │   │   ├── order-button.css
+        │   │   └── watchlist.css             # [v2] Styles watchlist + avis
+        │   └── pages/
+        │       ├── cart.css
+        │       ├── home.css
+        │       ├── login.css
+        │       ├── movie-detail.css
+        │       ├── movies.css
+        │       ├── profile.css
+        │       └── search.css
+        │
+        └── js/
+            ├── app.js                        # Point d'entrée JS global
+            ├── components/
+            │   ├── blur-up.js                # [v2] Lazy loading progressif
+            │   ├── cart-ajax.js              # [v2] Panier AJAX (sans rechargement)
+            │   ├── loader.js
+            │   ├── logout-button.js
+            │   ├── movie-card.js
+            │   ├── navbar.js
+            │   ├── order-button.js
+            │   ├── rating-widget.js          # [v2] Widget notation étoiles
+            │   ├── search-autocomplete.js    # [v2] Recherche instantanée
+            │   └── watchlist-button.js       # [v2] Bouton Ma liste
+            └── pages/
+                ├── cart.js
+                ├── home.js
+                ├── movie-detail.js
+                ├── movies.js
+                ├── profile.js
+                └── search.js
 ```
+
+> Les entrées marquées `[v2]` sont les ajouts de la version 2.
 
 ---
 

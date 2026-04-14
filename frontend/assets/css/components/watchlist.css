@@ -1,0 +1,214 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   frontend/assets/css/components/watchlist.css — Supinfo.TV
+   Styles pour le bouton watchlist sur les movie-cards et la page "Ma liste"
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Bouton watchlist flottant sur la movie-card ──────────────────────────── */
+.movie-card-watchlist {
+    position: absolute;
+    z-index: 4;
+    width: 28px !important;
+    height: 28px !important;
+    min-width: unset !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 11px !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+    opacity: 0;
+    transform: scale(0.8);
+    transition:
+        opacity var(--transition),
+        transform var(--transition-snap),
+        background var(--transition),
+        border-color var(--transition),
+        color var(--transition);
+}
+
+/* Afficher au hover de la card */
+.movie-card:hover .movie-card-watchlist {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* État actif (film dans la liste) */
+.movie-card .btn-watchlist.wl-active {
+    background: var(--accent-subtle) !important;
+    border-color: rgba(87, 204, 153, 0.5) !important;
+    color: var(--accent) !important;
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* ── Page watchlist ───────────────────────────────────────────────────────── */
+.watchlist-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 80px 24px;
+    gap: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+}
+
+.watchlist-empty-icon {
+    font-size: 56px;
+    opacity: 0.4;
+    animation: wl-float 3s ease-in-out infinite;
+}
+
+@keyframes wl-float {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.watchlist-empty-title {
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: -0.01em;
+}
+
+.watchlist-empty-desc {
+    font-size: 14px;
+    color: var(--text-muted);
+    max-width: 360px;
+    line-height: 1.7;
+    margin-bottom: 8px;
+}
+
+/* ── Badge watchlist navbar ───────────────────────────────────────────────── */
+.navbar-watchlist {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    border: 1px solid transparent;
+    transition:
+        color var(--transition),
+        background var(--transition),
+        border-color var(--transition),
+        transform var(--transition-snap);
+}
+
+.navbar-watchlist:hover {
+    color: var(--text);
+    background: var(--surface-2);
+    border-color: var(--border);
+    transform: scale(1.08);
+}
+
+.watchlist-badge {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 3px;
+    border-radius: 99px;
+    background: var(--gold);
+    color: var(--bg);
+    font-size: 9px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 0 2px var(--bg);
+    letter-spacing: 0;
+}
+
+/* ── Section avis sur la fiche film ──────────────────────────────────────── */
+.movie-reviews-section {
+    margin-top: 40px;
+    padding-top: 40px;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.movie-reviews-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.movie-reviews-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text);
+}
+
+.movie-review-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 16px 20px;
+    margin-bottom: 12px;
+}
+
+.movie-review-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.movie-review-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--deep), var(--accent));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: #fff;
+    font-weight: 500;
+    flex-shrink: 0;
+    text-transform: uppercase;
+}
+
+.movie-review-username {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+}
+
+.movie-review-date {
+    font-size: 11px;
+    color: var(--text-faint);
+    margin-left: auto;
+}
+
+.movie-review-stars {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 8px;
+}
+
+.movie-review-stars svg {
+    width: 14px;
+    height: 14px;
+}
+
+.movie-review-comment {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.7;
+}

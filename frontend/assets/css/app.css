@@ -13,3 +13,7 @@
 @import 'components/logout-button.css';
 @import 'components/order-button.css';
 @import 'components/footer.css';
+
+/* ── Nouveaux composants v2 ─────────────────────────────────────────────── */
+@import 'components/advanced-filters.css';
+@import 'components/watchlist.css';

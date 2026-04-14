@@ -1,14 +1,30 @@
 <?php
+// ══════════════════════════════════════════════════════════════════════════════
+//  backend/pages/profile.php — Supinfo.TV
+// ══════════════════════════════════════════════════════════════════════════════
 
-session_start();
-
+require_once __DIR__ . '/../config/security.php';
 require_once __DIR__ . '/../services/auth.php';
 require_once __DIR__ . '/../services/orders.php';
 require_once __DIR__ . '/../services/csrf.php';
 
 auth_start_session();
 
-$basePath = rtrim(str_replace('\\', '/', dirname(dirname(dirname($_SERVER['SCRIPT_NAME'])))), '/');
+// ── basePath robuste ──────────────────────────────────────────────────────────
+// Ce fichier est dans /backend/pages/ — on remonte jusqu'à la racine du projet
+// en utilisant le chemin filesystem (fiable) plutôt que SCRIPT_NAME (variable).
+$projectRoot = rtrim(str_replace('\\', '/', dirname(__DIR__, 2)), '/');
+
+// Déduire le basePath web depuis la racine du projet
+// On cherche si le projet est sous un sous-dossier du vhost ou à la racine
+$scriptName = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+// SCRIPT_NAME = /sous-dossier/backend/pages/profile.php  ou  /backend/pages/profile.php
+// On extrait tout ce qui est avant /backend/pages/
+if (preg_match('#^(.+?)/backend/pages/[^/]+$#', $scriptName, $m)) {
+    $basePath = rtrim($m[1], '/');
+} else {
+    $basePath = '';
+}
 
 if (!auth_check()) {
     header('Location: ' . $basePath . '/pages/login.php?redirect=' . urlencode($_SERVER['REQUEST_URI']));
@@ -66,23 +82,26 @@ include __DIR__ . '/../partials/navbar.php';
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
       <polyline points="20 6 9 17 4 12"/>
     </svg>
-    <span style="font-size:14px;color:var(--accent);font-weight:500;">Commande validée ! Vos films sont disponibles ci-dessous.</span>
+    <span style="font-size:14px;color:var(--accent);font-weight:500;">
+      Commande validée ! Vos films sont disponibles ci-dessous.
+    </span>
   </div>
   <?php endif; ?>
 
   <!-- Header profil -->
   <div style="display:flex;align-items:center;gap:24px;margin-bottom:48px;flex-wrap:wrap;">
-    <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--deep),var(--accent));
+    <div style="width:80px;height:80px;border-radius:50%;
+                background:linear-gradient(135deg,var(--deep),var(--accent));
                 display:flex;align-items:center;justify-content:center;flex-shrink:0;
-                font-size:28px;font-weight:500;color:#fff;border:2px solid var(--border-bright);
-                box-shadow:0 0 24px var(--accent-glow);">
+                font-size:28px;font-weight:500;color:#fff;
+                border:2px solid var(--border-bright);box-shadow:0 0 24px var(--accent-glow);">
       <?= mb_strtoupper(mb_substr($userName, 0, 1)) ?>
     </div>
     <div>
       <h1 style="font-size:28px;font-weight:500;letter-spacing:-0.02em;color:var(--text);margin-bottom:4px;">
         <?= htmlspecialchars($userName) ?>
       </h1>
-      <p style="font-size:14px;color:var(--text-muted);margin:0;display:flex;align-items:center;gap:8px;">
+      <p style="font-size:14px;color:var(--text-muted);margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <?= htmlspecialchars($userMail) ?>
         <?php if ($verified): ?>
         <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--accent);
@@ -101,7 +120,8 @@ include __DIR__ . '/../partials/navbar.php';
       </p>
     </div>
     <?php if (!$verified): ?>
-    <form method="POST" action="<?= $basePath ?>/backend/pages/resend-verification.php" style="margin-left:auto;">
+    <form method="POST" action="<?= $basePath ?>/backend/pages/resend-verification.php"
+          style="margin-left:auto;">
       <?= csrf_field() ?>
       <button type="submit" class="btn-more">Renvoyer l'e-mail de vérification</button>
     </form>
@@ -117,11 +137,14 @@ include __DIR__ . '/../partials/navbar.php';
       <section style="margin-bottom:48px;">
         <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:24px;">
           <div>
-            <div style="font-size:10px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;">Bibliothèque</div>
+            <div style="font-size:10px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;
+                        color:var(--accent);margin-bottom:6px;">Bibliothèque</div>
             <h2 style="font-size:22px;font-weight:500;color:var(--text);letter-spacing:-0.01em;">
               Mes films
               <?php if (!empty($purchasedMovies)): ?>
-              <span style="font-size:14px;color:var(--text-muted);font-weight:400;margin-left:8px;"><?= count($purchasedMovies) ?> film<?= count($purchasedMovies) > 1 ? 's' : '' ?></span>
+              <span style="font-size:14px;color:var(--text-muted);font-weight:400;margin-left:8px;">
+                <?= count($purchasedMovies) ?> film<?= count($purchasedMovies) > 1 ? 's' : '' ?>
+              </span>
               <?php endif; ?>
             </h2>
           </div>
@@ -131,8 +154,12 @@ include __DIR__ . '/../partials/navbar.php';
         <div style="padding:48px 24px;background:var(--surface);border:1px solid var(--border);
                     border-radius:var(--radius-lg);text-align:center;">
           <div style="font-size:40px;margin-bottom:16px;opacity:0.4;">🎬</div>
-          <p style="color:var(--text-muted);font-size:14px;margin-bottom:20px;">Vous n'avez pas encore acheté de films.</p>
-          <a href="<?= $basePath ?>/backend/pages/movies.php" class="btn-primary">Explorer le catalogue</a>
+          <p style="color:var(--text-muted);font-size:14px;margin-bottom:20px;">
+            Vous n'avez pas encore acheté de films.
+          </p>
+          <a href="<?= $basePath ?>/backend/pages/movies.php" class="btn-primary">
+            Explorer le catalogue
+          </a>
         </div>
         <?php else: ?>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px;">
@@ -144,6 +171,7 @@ include __DIR__ . '/../partials/navbar.php';
               'year'   => substr($pm['purchased_at'] ?? '', 0, 4),
               'note'   => null,
               'price'  => ['unit' => $pm['price']],
+              'type'   => 'movie',
             ];
           ?>
             <?php include __DIR__ . '/../../frontend/partials/movie-card.php'; ?>
@@ -156,15 +184,21 @@ include __DIR__ . '/../partials/navbar.php';
       <?php if (!empty($orderHistory)): ?>
       <section>
         <div style="margin-bottom:24px;">
-          <div style="font-size:10px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;">Historique</div>
-          <h2 style="font-size:22px;font-weight:500;color:var(--text);letter-spacing:-0.01em;">Mes commandes</h2>
+          <div style="font-size:10px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;
+                      color:var(--accent);margin-bottom:6px;">Historique</div>
+          <h2 style="font-size:22px;font-weight:500;color:var(--text);letter-spacing:-0.01em;">
+            Mes commandes
+          </h2>
         </div>
         <div style="display:flex;flex-direction:column;gap:12px;">
           <?php foreach ($orderHistory as $order): ?>
-          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px 24px;">
+          <div style="background:var(--surface);border:1px solid var(--border);
+                      border-radius:var(--radius-lg);padding:20px 24px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
               <div>
-                <span style="font-size:12px;color:var(--text-faint);">Commande #<?= (int)$order['id'] ?></span>
+                <span style="font-size:12px;color:var(--text-faint);">
+                  Commande #<?= (int)$order['id'] ?>
+                </span>
                 <div style="font-size:13px;color:var(--text-muted);margin-top:2px;">
                   <?= date('d/m/Y à H\hi', strtotime($order['created_at'])) ?>
                 </div>
@@ -178,15 +212,20 @@ include __DIR__ . '/../partials/navbar.php';
               <a href="<?= $basePath ?>/backend/pages/movie-detail.php?id=<?= (int)$item['tmdb_id'] ?>"
                  style="display:flex;align-items:center;gap:8px;padding:6px 10px;
                         background:var(--surface-2);border:1px solid var(--border-subtle);
-                        border-radius:var(--radius);transition:border-color var(--transition);"
+                        border-radius:var(--radius);text-decoration:none;
+                        transition:border-color var(--transition);"
                  onmouseover="this.style.borderColor='var(--accent)'"
                  onmouseout="this.style.borderColor='var(--border-subtle)'">
                 <?php if (!empty($item['poster'])): ?>
                 <img src="<?= htmlspecialchars($item['poster']) ?>" alt=""
                      style="width:28px;border-radius:3px;flex-shrink:0;">
                 <?php endif; ?>
-                <span style="font-size:12px;color:var(--text-muted);"><?= htmlspecialchars($item['title']) ?></span>
-                <span style="font-size:12px;color:var(--gold);margin-left:auto;"><?= number_format((float)$item['price'], 2, ',', '') ?>€</span>
+                <span style="font-size:12px;color:var(--text-muted);">
+                  <?= htmlspecialchars($item['title']) ?>
+                </span>
+                <span style="font-size:12px;color:var(--gold);margin-left:auto;">
+                  <?= number_format((float)$item['price'], 2, ',', '') ?>€
+                </span>
               </a>
               <?php endforeach; ?>
             </div>
@@ -204,17 +243,21 @@ include __DIR__ . '/../partials/navbar.php';
                   padding:24px;position:sticky;top:calc(var(--navbar-h) + 24px);">
         <div style="font-size:10px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;
                     color:var(--text-faint);margin-bottom:16px;">Sécurité</div>
-        <h3 style="font-size:17px;font-weight:500;color:var(--text);margin-bottom:20px;">Changer le mot de passe</h3>
+        <h3 style="font-size:17px;font-weight:500;color:var(--text);margin-bottom:20px;">
+          Changer le mot de passe
+        </h3>
 
         <?php if ($pwdSuccess): ?>
-        <div style="padding:12px 14px;background:rgba(87,204,153,0.1);border:1px solid rgba(87,204,153,0.3);
-                    border-radius:var(--radius);margin-bottom:16px;font-size:13px;color:var(--accent);">
+        <div style="padding:12px 14px;background:rgba(87,204,153,0.1);
+                    border:1px solid rgba(87,204,153,0.3);border-radius:var(--radius);
+                    margin-bottom:16px;font-size:13px;color:var(--accent);">
           ✅ Mot de passe modifié avec succès.
         </div>
         <?php endif; ?>
         <?php if ($pwdError): ?>
-        <div style="padding:12px 14px;background:rgba(224,90,106,0.08);border:1px solid var(--danger);
-                    border-radius:var(--radius);margin-bottom:16px;font-size:13px;color:var(--danger);">
+        <div style="padding:12px 14px;background:rgba(224,90,106,0.08);
+                    border:1px solid var(--danger);border-radius:var(--radius);
+                    margin-bottom:16px;font-size:13px;color:var(--danger);">
           <?= htmlspecialchars($pwdError) ?>
         </div>
         <?php endif; ?>
@@ -226,17 +269,31 @@ include __DIR__ . '/../partials/navbar.php';
           <?php
           $inputStyle = "width:100%;padding:11px 14px;background:var(--surface-2);
                          border:1px solid var(--border);border-radius:var(--radius);
-                         color:var(--text);font-family:var(--font);font-size:13px;outline:none;
-                         margin-bottom:12px;box-sizing:border-box;";
+                         color:var(--text);font-family:var(--font);font-size:13px;
+                         outline:none;margin-bottom:12px;box-sizing:border-box;
+                         transition:border-color 0.2s ease;";
           ?>
 
-          <input type="password" name="current_password" placeholder="Mot de passe actuel"
-                 required autocomplete="current-password" style="<?= $inputStyle ?>">
-          <input type="password" name="new_password" placeholder="Nouveau mot de passe"
-                 required autocomplete="new-password" minlength="8" style="<?= $inputStyle ?>">
-          <input type="password" name="confirm_password" placeholder="Confirmer le nouveau mot de passe"
+          <input type="password" name="current_password"
+                 placeholder="Mot de passe actuel"
+                 required autocomplete="current-password"
+                 style="<?= $inputStyle ?>"
+                 onfocus="this.style.borderColor='var(--accent)'"
+                 onblur="this.style.borderColor='var(--border)'">
+
+          <input type="password" name="new_password"
+                 placeholder="Nouveau mot de passe"
                  required autocomplete="new-password" minlength="8"
-                 style="<?= $inputStyle ?>margin-bottom:16px;">
+                 style="<?= $inputStyle ?>"
+                 onfocus="this.style.borderColor='var(--accent)'"
+                 onblur="this.style.borderColor='var(--border)'">
+
+          <input type="password" name="confirm_password"
+                 placeholder="Confirmer le nouveau mot de passe"
+                 required autocomplete="new-password" minlength="8"
+                 style="<?= $inputStyle ?>margin-bottom:16px;"
+                 onfocus="this.style.borderColor='var(--accent)'"
+                 onblur="this.style.borderColor='var(--border)'">
 
           <p style="font-size:11px;color:var(--text-faint);margin-bottom:16px;line-height:1.6;">
             8 caractères minimum · 1 majuscule · 1 chiffre
@@ -249,9 +306,10 @@ include __DIR__ . '/../partials/navbar.php';
 
         <div style="margin-top:24px;padding-top:24px;border-top:1px solid var(--border);">
           <a href="<?= $basePath ?>/backend/pages/logout.php"
-             style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted);
-                    padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius);
-                    transition:all var(--transition);background:transparent;"
+             style="display:flex;align-items:center;gap:8px;font-size:13px;
+                    color:var(--text-muted);padding:10px 14px;border:1px solid var(--border);
+                    border-radius:var(--radius);text-decoration:none;background:transparent;
+                    transition:all 0.2s ease;"
              onmouseover="this.style.color='var(--danger)';this.style.borderColor='var(--danger)';this.style.background='rgba(224,90,106,0.06)'"
              onmouseout="this.style.color='var(--text-muted)';this.style.borderColor='var(--border)';this.style.background='transparent'">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

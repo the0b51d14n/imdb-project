@@ -3,8 +3,7 @@
 //  frontend/pages/login.php — Supinfo.TV
 // ══════════════════════════════════════════════════════════════════════════════
 
-session_start();
-
+require_once __DIR__ . '/../../backend/config/security.php';
 require_once __DIR__ . '/../../backend/services/auth.php';
 require_once __DIR__ . '/../../backend/services/csrf.php';
 require_once __DIR__ . '/../../backend/config/database.php';
@@ -20,10 +19,7 @@ if (auth_check()) {
 $basePath = rtrim(str_replace('\\', '/', dirname(dirname($_SERVER['SCRIPT_NAME']))), '/');
 $mode     = ($_GET['mode'] ?? '') === 'register' ? 'register' : 'login';
 
-if (empty($_SESSION['_csrf_token'])) {
-    $_SESSION['_csrf_token'] = bin2hex(random_bytes(32));
-}
-$csrfToken = $_SESSION['_csrf_token'];
+$csrfToken = csrf_token();
 
 $loginError    = null;
 $registerError = null;
@@ -31,7 +27,7 @@ $authNotice    = $_SESSION['auth_notice'] ?? null;
 $authOld       = [];
 unset($_SESSION['auth_notice']);
 
-// ── Validation email uniquement pour l'inscription (MX + blacklist) ───────────
+// ── Validation email (inscription) ───────────────────────────────────────────
 function validate_email_for_register(string $email): array
 {
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -56,7 +52,6 @@ function validate_email_for_register(string $email): array
         return ['ok' => false, 'error' => "Les adresses e-mail temporaires ne sont pas acceptées."];
     }
 
-    // Vérification MX uniquement — sans fallback A record
     if (!checkdnsrr($domain, 'MX')) {
         return [
             'ok'    => false,
@@ -76,8 +71,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $loginError = "Requête invalide. Veuillez réessayer.";
     } else {
 
-        // ── CONNEXION ─────────────────────────────────────────────────────────
-        // Pas de vérification MX ici — inutile et bloquant pour des comptes existants
         if ($action === 'login') {
             $email    = trim($_POST['email']    ?? '');
             $password = $_POST['password']      ?? '';
@@ -102,7 +95,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        // ── INSCRIPTION ───────────────────────────────────────────────────────
         if ($action === 'register') {
             $username  = trim($_POST['username']  ?? '');
             $email     = trim($_POST['email']     ?? '');
@@ -125,12 +117,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     if ($result['ok']) {
                         if (!empty($result['token'])) {
-                            $mailResult = mailer_send_verification($email, $username, $result['token']);
-                            if (!$mailResult['ok']) {
-                                error_log('[LOGIN] Echec envoi mail vérification : ' . ($mailResult['error'] ?? 'inconnu'));
-                            }
+                            mailer_send_verification($email, $username, $result['token']);
                         }
-                        $_SESSION['auth_notice'] = "✅ Compte créé ! Un e-mail de vérification a été envoyé à <strong>" . htmlspecialchars($email) . "</strong>. Cliquez sur le lien pour activer votre compte.";
+                        $_SESSION['auth_notice'] = "✅ Compte créé ! Un e-mail de vérification a été envoyé à <strong>" . htmlspecialchars($email) . "</strong>.";
                         header('Location: ' . $basePath . '/pages/login.php');
                         exit;
                     } else {
@@ -140,6 +129,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
+}
+
+// ── URL OAuth Google ──────────────────────────────────────────────────────────
+$googleClientId = getenv('GOOGLE_CLIENT_ID') ?: '';
+$googleAuthUrl  = '';
+if ($googleClientId) {
+    $googleState    = bin2hex(random_bytes(16));
+    $_SESSION['oauth_state'] = $googleState;
+    $googleAuthUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' . http_build_query([
+        'client_id'     => $googleClientId,
+        'redirect_uri'  => (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $basePath . '/backend/pages/oauth-google.php',
+        'response_type' => 'code',
+        'scope'         => 'openid email profile',
+        'state'         => $googleState,
+        'prompt'        => 'select_account',
+    ]);
+}
+
+// ── URL OAuth Facebook ────────────────────────────────────────────────────────
+$fbAppId   = getenv('FACEBOOK_APP_ID') ?: '';
+$fbAuthUrl = '';
+if ($fbAppId) {
+    $fbState    = bin2hex(random_bytes(16));
+    $_SESSION['oauth_fb_state'] = $fbState;
+    $fbAuthUrl = 'https://www.facebook.com/v19.0/dialog/oauth?' . http_build_query([
+        'client_id'     => $fbAppId,
+        'redirect_uri'  => (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $basePath . '/backend/pages/oauth-facebook.php',
+        'state'         => $fbState,
+        'scope'         => 'email,public_profile',
+    ]);
 }
 
 $pageTitle  = 'Connexion';
@@ -154,7 +173,8 @@ include __DIR__ . '/../partials/loader.php';
 <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
 
 <style>
-.email-status {
+/* ── Statuts email / mot de passe ─────────────────────────────────── */
+.email-status, .pwd-status {
     display: none;
     align-items: center;
     gap: 6px;
@@ -165,23 +185,10 @@ include __DIR__ . '/../partials/loader.php';
     border-radius: var(--radius-sm);
     animation: fadeInStatus 0.2s ease;
 }
-.email-status.show     { display: flex; }
-.email-status.invalid  { color: var(--danger);     background: rgba(224,90,106,0.08);  border: 1px solid rgba(224,90,106,0.3); }
-.email-status.checking { color: var(--text-muted); background: var(--surface-2);       border: 1px solid var(--border); }
-
-.pwd-status {
-    display: none;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    margin-top: 5px;
-    margin-bottom: 4px;
-    padding: 6px 10px;
-    border-radius: var(--radius-sm);
-    animation: fadeInStatus 0.2s ease;
-}
-.pwd-status.show    { display: flex; }
-.pwd-status.valid   { color: var(--accent); background: rgba(87,204,153,0.1);  border: 1px solid rgba(87,204,153,0.3); }
+.email-status.show, .pwd-status.show { display: flex; }
+.email-status.invalid  { color: var(--danger); background: rgba(224,90,106,0.08); border: 1px solid rgba(224,90,106,0.3); }
+.email-status.checking { color: var(--text-muted); background: var(--surface-2); border: 1px solid var(--border); }
+.pwd-status.valid   { color: var(--accent); background: rgba(87,204,153,0.1); border: 1px solid rgba(87,204,153,0.3); }
 .pwd-status.invalid { color: var(--danger); background: rgba(224,90,106,0.08); border: 1px solid rgba(224,90,106,0.3); }
 
 @keyframes fadeInStatus {
@@ -189,6 +196,7 @@ include __DIR__ . '/../partials/loader.php';
     to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ── Notice ───────────────────────────────────────────────────────── */
 .auth-notice {
     position: fixed;
     top: 80px;
@@ -207,6 +215,8 @@ include __DIR__ . '/../partials/loader.php';
     text-align: center;
     line-height: 1.6;
 }
+
+/* ── Erreur ───────────────────────────────────────────────────────── */
 .auth-error-box {
     background: rgba(224,90,106,0.1);
     border: 1px solid var(--danger);
@@ -217,6 +227,83 @@ include __DIR__ . '/../partials/loader.php';
     color: var(--danger);
     line-height: 1.6;
     text-align: left;
+}
+
+/* ── Séparateur "ou" ──────────────────────────────────────────────── */
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 6px 0;
+    color: var(--text-faint);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+}
+.auth-divider::before, .auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+/* ── Boutons sociaux ──────────────────────────────────────────────── */
+.social-icons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 4px;
+}
+.social-icons a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 42px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 13px;
+    color: var(--text-muted);
+    background: var(--surface-2);
+    text-decoration: none;
+    padding: 0 16px;
+    transition:
+        color var(--transition),
+        border-color var(--transition),
+        background var(--transition),
+        transform var(--transition-snap),
+        box-shadow var(--transition-slow);
+    white-space: nowrap;
+    font-family: var(--font);
+    font-weight: 500;
+}
+.social-icons a:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 12px var(--accent-glow);
+}
+.social-icons a.btn-google {
+    flex: 1;
+}
+.social-icons a.btn-google:hover {
+    color: #fff;
+    border-color: #4285f4;
+    background: rgba(66,133,244,0.15);
+}
+.social-icons a.btn-facebook {
+    flex: 1;
+}
+.social-icons a.btn-facebook:hover {
+    color: #fff;
+    border-color: #1877f2;
+    background: rgba(24,119,242,0.15);
+}
+.social-icons a.btn-social-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+.social-icon-svg {
+    display: block;
+    flex-shrink: 0;
 }
 </style>
 
@@ -236,7 +323,7 @@ include __DIR__ . '/../partials/loader.php';
   <div class="auth-page">
     <div class="auth-container <?= $mode === 'register' ? 'active' : '' ?>" id="auth-container">
 
-      <!-- ── CONNEXION ───────────────────────────────────────────────────── -->
+      <!-- ══ CONNEXION ════════════════════════════════════════════════════════ -->
       <div class="form-box login">
         <form method="POST" action="">
           <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
@@ -268,14 +355,52 @@ include __DIR__ . '/../partials/loader.php';
           <button type="submit" class="auth-btn">Se connecter</button>
 
           <div class="auth-divider">ou continuer avec</div>
+
           <div class="social-icons">
-            <a href="#" title="Google"><i class="bx bxl-google"></i></a>
-            <a href="#" title="Facebook"><i class="bx bxl-facebook"></i></a>
+            <!-- Google -->
+            <?php if ($googleAuthUrl): ?>
+            <a href="<?= htmlspecialchars($googleAuthUrl) ?>" class="btn-google">
+              <svg class="social-icon-svg" width="18" height="18" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              Google
+            </a>
+            <?php else: ?>
+            <a href="#" class="btn-google btn-social-disabled" title="Configurez GOOGLE_CLIENT_ID dans .env">
+              <svg class="social-icon-svg" width="18" height="18" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              Google
+            </a>
+            <?php endif; ?>
+
+            <!-- Facebook -->
+            <?php if ($fbAuthUrl): ?>
+            <a href="<?= htmlspecialchars($fbAuthUrl) ?>" class="btn-facebook">
+              <svg class="social-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="#1877F2">
+                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+              </svg>
+              Facebook
+            </a>
+            <?php else: ?>
+            <a href="#" class="btn-facebook btn-social-disabled" title="Configurez FACEBOOK_APP_ID dans .env">
+              <svg class="social-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="#1877F2">
+                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+              </svg>
+              Facebook
+            </a>
+            <?php endif; ?>
           </div>
         </form>
       </div>
 
-      <!-- ── INSCRIPTION ─────────────────────────────────────────────────── -->
+      <!-- ══ INSCRIPTION ══════════════════════════════════════════════════════ -->
       <div class="form-box register">
         <form method="POST" action="?mode=register">
           <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
@@ -320,14 +445,50 @@ include __DIR__ . '/../partials/loader.php';
           <button type="submit" class="auth-btn">Créer un compte</button>
 
           <div class="auth-divider">ou continuer avec</div>
+
           <div class="social-icons">
-            <a href="#" title="Google"><i class="bx bxl-google"></i></a>
-            <a href="#" title="Facebook"><i class="bx bxl-facebook"></i></a>
+            <?php if ($googleAuthUrl): ?>
+            <a href="<?= htmlspecialchars($googleAuthUrl) ?>" class="btn-google">
+              <svg class="social-icon-svg" width="18" height="18" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              Google
+            </a>
+            <?php else: ?>
+            <a href="#" class="btn-google btn-social-disabled">
+              <svg class="social-icon-svg" width="18" height="18" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              Google
+            </a>
+            <?php endif; ?>
+
+            <?php if ($fbAuthUrl): ?>
+            <a href="<?= htmlspecialchars($fbAuthUrl) ?>" class="btn-facebook">
+              <svg class="social-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="#1877F2">
+                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+              </svg>
+              Facebook
+            </a>
+            <?php else: ?>
+            <a href="#" class="btn-facebook btn-social-disabled">
+              <svg class="social-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="#1877F2">
+                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+              </svg>
+              Facebook
+            </a>
+            <?php endif; ?>
           </div>
         </form>
       </div>
 
-      <!-- ── TOGGLE ──────────────────────────────────────────────────────── -->
+      <!-- ══ TOGGLE ════════════════════════════════════════════════════════════ -->
       <div class="toggle-box">
         <div class="toggle-panel toggle-left">
           <h1>Bienvenue !</h1>
@@ -377,7 +538,6 @@ include __DIR__ . '/../partials/loader.php';
         el.innerHTML = '';
     }
 
-    // Domaines jetables — erreur immédiate
     const DISPOSABLE = new Set([
         'mailinator.com','guerrillamail.com','tempmail.com','throwam.com',
         'yopmail.com','sharklasers.com','grr.la','spam4.me','trashmail.com',
@@ -387,7 +547,6 @@ include __DIR__ . '/../partials/loader.php';
         'tempinbox.com','fakemail.net','temp-mail.org','mailtemp.info',
     ]);
 
-    // Domaines connus valides — pas besoin d'appel réseau
     const KNOWN_VALID = new Set([
         'gmail.com','googlemail.com','yahoo.com','yahoo.fr','yahoo.co.uk',
         'hotmail.com','hotmail.fr','outlook.com','outlook.fr','live.com',
@@ -398,43 +557,29 @@ include __DIR__ . '/../partials/loader.php';
 
     // ── Validation email inscription ──────────────────────────────────────
     const registerEmailInput = document.getElementById('register-email');
-
     if (registerEmailInput) {
         const checkEmail = debounce(async (value) => {
             if (!value) { hideEmailStatus(); return; }
-
             if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value)) {
                 showEmailStatus('invalid', "Format d'adresse e-mail invalide.");
                 return;
             }
-
             const domain = value.split('@')[1].toLowerCase();
-
             if (DISPOSABLE.has(domain)) {
                 showEmailStatus('invalid', 'Les adresses e-mail temporaires ne sont pas acceptées.');
                 return;
             }
-
-            if (KNOWN_VALID.has(domain)) {
-                hideEmailStatus(); // domaine connu → pas de feedback inutile
-                return;
-            }
-
+            if (KNOWN_VALID.has(domain)) { hideEmailStatus(); return; }
             showEmailStatus('checking', 'Vérification du domaine…');
-
             try {
-                // MX uniquement — pas de fallback A record
                 const res  = await fetch('https://dns.google/resolve?name=' + encodeURIComponent(domain) + '&type=MX');
                 const data = await res.json();
-
                 if (data.Answer && data.Answer.length > 0) {
-                    hideEmailStatus(); // valide → on n'affiche rien de trompeur
+                    hideEmailStatus();
                 } else {
                     showEmailStatus('invalid', 'Le domaine <strong>@' + domain + '</strong> n\'accepte pas d\'e-mails.');
                 }
-            } catch {
-                hideEmailStatus(); // erreur réseau → PHP tranchera
-            }
+            } catch { hideEmailStatus(); }
         }, 700);
 
         registerEmailInput.addEventListener('input', (e) => checkEmail(e.target.value.trim()));
@@ -462,7 +607,7 @@ include __DIR__ . '/../partials/loader.php';
     pwd1?.addEventListener('input', checkPwd);
     pwd2?.addEventListener('input', checkPwd);
 
-    // ── Auto-dismiss notice après 7s ──────────────────────────────────────
+    // ── Auto-dismiss notice ───────────────────────────────────────────────
     const notice = document.querySelector('.auth-notice');
     if (notice) {
         setTimeout(() => {
