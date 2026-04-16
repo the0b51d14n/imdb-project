@@ -61,11 +61,11 @@ function orders_get_purchased_movies(): array
  
     $stmt = db()->prepare(
         'SELECT oi.tmdb_id, oi.title, oi.poster, oi.price, o.created_at AS purchased_at
-         FROM order_items oi
-         JOIN orders o ON o.id = oi.order_id
-         WHERE o.user_id = :uid
-         GROUP BY oi.tmdb_id
-         ORDER BY o.created_at DESC'
+        FROM order_items oi
+        JOIN orders o ON o.id = oi.order_id
+        WHERE o.user_id = :uid
+        GROUP BY oi.tmdb_id, oi.title, oi.poster, oi.price, o.created_at
+        ORDER BY o.created_at DESC'
     );
     $stmt->execute([':uid' => $uid]);
     return $stmt->fetchAll();
