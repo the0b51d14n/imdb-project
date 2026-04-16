@@ -147,20 +147,6 @@ if ($googleClientId) {
     ]);
 }
 
-// ── URL OAuth Facebook ────────────────────────────────────────────────────────
-$fbAppId   = getenv('FACEBOOK_APP_ID') ?: '';
-$fbAuthUrl = '';
-if ($fbAppId) {
-    $fbState    = bin2hex(random_bytes(16));
-    $_SESSION['oauth_fb_state'] = $fbState;
-    $fbAuthUrl = 'https://www.facebook.com/v19.0/dialog/oauth?' . http_build_query([
-        'client_id'     => $fbAppId,
-        'redirect_uri'  => (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $basePath . '/backend/pages/oauth-facebook.php',
-        'state'         => $fbState,
-        'scope'         => 'email,public_profile',
-    ]);
-}
-
 $pageTitle  = 'Connexion';
 $pageCSS    = 'pages/login.css';
 $pageDesc   = 'Connectez-vous à Supinfo.TV ou créez un compte.';
@@ -265,7 +251,7 @@ include __DIR__ . '/../partials/loader.php';
     color: var(--text-muted);
     background: var(--surface-2);
     text-decoration: none;
-    padding: 0 16px;
+    padding: 0 20px;
     transition:
         color var(--transition),
         border-color var(--transition),
@@ -275,26 +261,16 @@ include __DIR__ . '/../partials/loader.php';
     white-space: nowrap;
     font-family: var(--font);
     font-weight: 500;
+    flex: 1;
 }
 .social-icons a:hover {
     transform: translateY(-2px);
     box-shadow: 0 0 12px var(--accent-glow);
 }
-.social-icons a.btn-google {
-    flex: 1;
-}
 .social-icons a.btn-google:hover {
     color: #fff;
     border-color: #4285f4;
     background: rgba(66,133,244,0.15);
-}
-.social-icons a.btn-facebook {
-    flex: 1;
-}
-.social-icons a.btn-facebook:hover {
-    color: #fff;
-    border-color: #1877f2;
-    background: rgba(24,119,242,0.15);
 }
 .social-icons a.btn-social-disabled {
     opacity: 0.45;
@@ -357,7 +333,6 @@ include __DIR__ . '/../partials/loader.php';
           <div class="auth-divider">ou continuer avec</div>
 
           <div class="social-icons">
-            <!-- Google -->
             <?php if ($googleAuthUrl): ?>
             <a href="<?= htmlspecialchars($googleAuthUrl) ?>" class="btn-google">
               <svg class="social-icon-svg" width="18" height="18" viewBox="0 0 24 24">
@@ -377,23 +352,6 @@ include __DIR__ . '/../partials/loader.php';
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
               </svg>
               Google
-            </a>
-            <?php endif; ?>
-
-            <!-- Facebook -->
-            <?php if ($fbAuthUrl): ?>
-            <a href="<?= htmlspecialchars($fbAuthUrl) ?>" class="btn-facebook">
-              <svg class="social-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="#1877F2">
-                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-              </svg>
-              Facebook
-            </a>
-            <?php else: ?>
-            <a href="#" class="btn-facebook btn-social-disabled" title="Configurez FACEBOOK_APP_ID dans .env">
-              <svg class="social-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="#1877F2">
-                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-              </svg>
-              Facebook
             </a>
             <?php endif; ?>
           </div>
@@ -466,22 +424,6 @@ include __DIR__ . '/../partials/loader.php';
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
               </svg>
               Google
-            </a>
-            <?php endif; ?>
-
-            <?php if ($fbAuthUrl): ?>
-            <a href="<?= htmlspecialchars($fbAuthUrl) ?>" class="btn-facebook">
-              <svg class="social-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="#1877F2">
-                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-              </svg>
-              Facebook
-            </a>
-            <?php else: ?>
-            <a href="#" class="btn-facebook btn-social-disabled">
-              <svg class="social-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="#1877F2">
-                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-              </svg>
-              Facebook
             </a>
             <?php endif; ?>
           </div>

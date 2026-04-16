@@ -73,10 +73,9 @@ if (!$profile || empty($profile['email'])) {
 
 $email    = strtolower(trim($profile['email']));
 $name     = trim($profile['name'] ?? explode('@', $email)[0]);
-$googleId = $profile['id'] ?? '';
 
 // ── Connexion ou création de compte ──────────────────────────────────────────
-_oauth_login_or_register($email, $name, 'google', $googleId, $basePath);
+_oauth_login_or_register($email, $name, $basePath);
 
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -114,7 +113,7 @@ function _oauth_get(string $url, string $token): ?array
     return json_decode($res, true);
 }
 
-function _oauth_login_or_register(string $email, string $name, string $provider, string $providerId, string $basePath): void
+function _oauth_login_or_register(string $email, string $name, string $basePath): void
 {
     // 1. Chercher un compte existant par email
     $stmt = db()->prepare('SELECT id, username, email_verified_at FROM users WHERE email = :email LIMIT 1');
@@ -123,8 +122,8 @@ function _oauth_login_or_register(string $email, string $name, string $provider,
 
     if ($user) {
         // Compte existant → connexion directe
-        // Marquer l'email comme vérifié si ce n'est pas déjà le cas (Google vérifie ses emails)
-        if ($provider === 'google' && empty($user['email_verified_at'])) {
+        // Google vérifie ses emails : on marque l'email comme vérifié si besoin
+        if (empty($user['email_verified_at'])) {
             db()->prepare('UPDATE users SET email_verified_at = NOW() WHERE id = :id')
                 ->execute([':id' => $user['id']]);
         }
@@ -143,7 +142,6 @@ function _oauth_login_or_register(string $email, string $name, string $provider,
     }
 
     // 2. Créer un nouveau compte
-    // Générer un username unique depuis le nom
     $baseUsername = preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(' ', '_', $name));
     $baseUsername = substr($baseUsername ?: 'user', 0, 30);
     $username     = $baseUsername;
@@ -156,7 +154,7 @@ function _oauth_login_or_register(string $email, string $name, string $provider,
         $username = $baseUsername . $suffix++;
     }
 
-    // Mot de passe aléatoire (inutilisable directement — login uniquement via OAuth)
+    // Mot de passe aléatoire — connexion uniquement via OAuth Google
     $randomPassword = bin2hex(random_bytes(32));
     $hash           = password_hash($randomPassword, PASSWORD_BCRYPT, ['cost' => 12]);
 
@@ -181,12 +179,12 @@ function _oauth_login_or_register(string $email, string $name, string $provider,
 
         cart_sync_count();
 
-        $_SESSION['auth_notice'] = "✅ Compte créé avec votre compte " . ucfirst($provider) . " !";
+        $_SESSION['auth_notice'] = "✅ Compte créé avec votre compte Google !";
         header('Location: ' . $basePath . '/index.php');
         exit;
 
     } catch (PDOException $e) {
-        error_log('[oauth] Erreur création compte : ' . $e->getMessage());
+        error_log('[oauth-google] Erreur création compte : ' . $e->getMessage());
         $_SESSION['auth_notice'] = "❌ Erreur lors de la création de votre compte. Réessayez.";
         header('Location: ' . $basePath . '/pages/login.php');
         exit;
