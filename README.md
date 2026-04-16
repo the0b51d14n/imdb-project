@@ -1,6 +1,6 @@
 # Supinfo.TV
 
-Plateforme de vente de films et séries en ligne — projet académique SUPINFO.  
+Plateforme de vente de films en ligne — projet académique SUPINFO.  
 Données fournies par l'API [TMDB](https://www.themoviedb.org/).
 
 ---
