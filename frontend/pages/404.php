@@ -7,7 +7,8 @@
 
 http_response_code(404);
 
-session_start();
+require_once __DIR__ . '/../../backend/services/session.php';
+app_session_start();
 require_once __DIR__ . '/../../backend/services/auth.php';
 auth_start_session();
 

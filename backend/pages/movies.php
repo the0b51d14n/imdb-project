@@ -4,7 +4,8 @@
 //  Catalogue films avec filtres avancés (tri, note, prix, année).
 // ══════════════════════════════════════════════════════════════════════════════
 
-session_start();
+require_once __DIR__ . '/../services/session.php';
+app_session_start();
 
 require_once __DIR__ . '/../config/tmdb.php';
 require_once __DIR__ . '/../services/tmdb-service.php';
