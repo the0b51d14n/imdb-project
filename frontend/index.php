@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__ . '/../backend/services/session.php';
+app_session_start();
 
 require_once __DIR__ . '/config/tmdb.php';
 require_once __DIR__ . '/services/tmdb-service.php';
@@ -150,7 +151,7 @@ include __DIR__ . '/partials/navbar.php';
       </button>
       <div class="carousel-track">
         <?php foreach ($mainSection['movies'] as $movie): ?>
-          <?php include __DIR__ . '/frontend/partials/movie-card.php'; ?>
+          <?php include __DIR__ . '/partials/movie-card.php'; ?>
         <?php endforeach; ?>
       </div>
       <button class="carousel-btn next" aria-label="Suivant">
@@ -187,7 +188,7 @@ include __DIR__ . '/partials/navbar.php';
       </button>
       <div class="carousel-track">
         <?php foreach ($nowPlaying as $movie): ?>
-          <?php include __DIR__ . '/frontend/partials/movie-card.php'; ?>
+          <?php include __DIR__ . '/partials/movie-card.php'; ?>
         <?php endforeach; ?>
       </div>
       <button class="carousel-btn next" aria-label="Suivant">

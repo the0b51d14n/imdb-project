@@ -1,0 +1,30 @@
+# ══════════════════════════════════════════════════════════════════════════════
+#  .vercelignore — Supinfo.TV
+#  Fichiers non téléversés vers Vercel.
+#
+#  Important : le runtime vercel-php embarque TOUT le dépôt dans la lambda.
+#  Ce fichier est donc la première barrière contre l'envoi de secrets ou de
+#  fichiers d'infrastructure inutiles en production.
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── Secrets — la configuration vient des variables d'environnement Vercel ─────
+.env
+.env.*
+!.env.example
+
+# ── Infrastructure locale (Docker / XAMPP) ────────────────────────────────────
+docker/
+docker-compose.yml
+.github/
+pre-commit
+
+# ── Dumps SQL — à appliquer manuellement sur la base managée ──────────────────
+*.sql
+
+# ── Divers ────────────────────────────────────────────────────────────────────
+.git/
+.gitignore
+README.md
+node_modules/
+vendor/
+*.log

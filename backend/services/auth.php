@@ -5,6 +5,7 @@
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/security.php';
+require_once __DIR__ . '/session.php';
 
 if (!defined('SESSION_USER_ID'))       define('SESSION_USER_ID',       'user_id');
 if (!defined('SESSION_USER_NAME'))     define('SESSION_USER_NAME',     'user_name');
@@ -14,23 +15,8 @@ if (!defined('BCRYPT_COST'))           define('BCRYPT_COST', 12);
 
 function auth_start_session(): void
 {
-    if (session_status() === PHP_SESSION_NONE) {
-        session_set_cookie_params([
-            'lifetime' => 0,
-            'path'     => '/',
-            'secure'   => isset($_SERVER['HTTPS']) || getenv('APP_ENV') === 'production',
-            'httponly' => true,
-            'samesite' => 'Lax',
-        ]);
-        session_start();
-    }
-
-    if (!isset($_SESSION['_created'])) {
-        $_SESSION['_created'] = time();
-    } elseif (time() - $_SESSION['_created'] > 1800) {
-        session_regenerate_id(true);
-        $_SESSION['_created'] = time();
-    }
+    // Cookie, handler (MySQL ou fichiers) et rotation de l'ID : voir session.php
+    app_session_start();
 }
 
 function auth_check(): bool

@@ -119,6 +119,10 @@ docker compose restart nginx
 supinfotv/
 ├── .env.example                              # Template de configuration (pas de secrets)
 ├── .gitignore
+├── .vercelignore                             # Fichiers exclus du déploiement Vercel
+├── vercel.json                               # Runtime PHP + routes (équivalent nginx)
+├── api/
+│   └── index.php                             # Front controller Vercel (routage nginx rejoué)
 ├── .github/
 │   └── workflows/
 │       └── security.yml                      # CI/CD — audit sécurité automatique
@@ -137,6 +141,7 @@ supinfotv/
 │
 ├── backend/
 │   ├── Database.sql                          # Schéma principal
+│   ├── Database_sessions.sql                 # Table sessions (hébergement serverless)
 │   ├── Database_patch_auth.sql               # Patch v1 — auth renforcée
 │   ├── Database_patch_v2.sql                 # [v2] Cache, watchlist, logs, notations
 │   │
@@ -347,6 +352,81 @@ Le workflow `.github/workflows/security.yml` s'exécute à chaque push/PR et lan
 | `MAIL_PASS` | Mot de passe SMTP | — |
 | `MAIL_FROM` | Expéditeur | `noreply@supinfo.tv` |
 | `MAIL_FROM_NAME` | Nom expéditeur | `Supinfo.TV` |
+| `GOOGLE_CLIENT_ID` | OAuth Google (optionnel) | — |
+| `GOOGLE_CLIENT_SECRET` | OAuth Google (optionnel) | — |
+| `SESSION_DRIVER` | Stockage des sessions | `db` (défaut) / `files` |
+| `SESSION_TTL` | Durée de vie session (s) | `1800` |
+
+---
+
+## Déploiement sur Vercel
+
+Le projet tourne sur Vercel **sans changer de stack** : toujours du PHP natif et
+du MySQL, exécutés par le runtime communautaire [`vercel-php`](https://github.com/juicyfx/vercel-php).
+
+### Ce qui change par rapport à Docker
+
+| | Docker / XAMPP | Vercel |
+|---|---|---|
+| Serveur web | Nginx (`docker/nginx/default.conf`) | `api/index.php` (front controller) |
+| Base de données | Conteneur `mysql` | MySQL managé externe (PlanetScale, Railway, Aiven…) |
+| Sessions | Fichiers dans `/tmp` | Table `sessions` en base (`SESSION_DRIVER=db`) |
+| Assets | Servis par Nginx | Servis par le CDN Vercel (`vercel.json`) |
+
+Le front controller reproduit exactement le routage de Nginx et réécrit
+`$_SERVER['SCRIPT_NAME']` avec le chemin logique de chaque page : toutes les URLs
+du site (`/`, `/pages/*.php`, `/backend/pages/*.php`, `/backend/api/*.php`)
+restent identiques et aucun code métier n'a été modifié.
+
+### Étapes
+
+**1. Base de données managée**
+
+Créez une base MySQL chez un hébergeur externe, puis appliquez les trois scripts
+dans l'ordre :
+
+```bash
+mysql -h <host> -u <user> -p <base> < backend/Database.sql
+mysql -h <host> -u <user> -p <base> < backend/Database_patch.sql
+mysql -h <host> -u <user> -p <base> < backend/Database_sessions.sql
+```
+
+`Database_sessions.sql` est **obligatoire** : sans la table `sessions`, aucune
+connexion utilisateur ne tient d'une requête à l'autre en serverless.
+
+**2. Variables d'environnement Vercel**
+
+Dans *Settings → Environment Variables*, déclarez celles du tableau ci-dessus.
+Attention à trois d'entre elles :
+
+- `DB_HOST` : l'hôte public de la base managée, **pas** `mysql` (nom du conteneur Docker)
+- `APP_URL` : `https://<votre-projet>.vercel.app` — sinon les liens des e-mails de
+  vérification et de réinitialisation pointent vers `http://localhost`
+- `APP_ENV=production` et `APP_DEBUG=false`
+
+Le fichier `.env` n'est pas téléversé (voir `.vercelignore`) : la configuration
+vient uniquement des variables Vercel, lues par `getenv()` comme en local.
+
+**3. Déploiement**
+
+```bash
+npm i -g vercel
+vercel        # préversion
+vercel --prod # production
+```
+
+**4. Google OAuth (si utilisé)**
+
+Ajoutez `https://<votre-projet>.vercel.app/backend/pages/oauth-google.php` aux
+URI de redirection autorisées dans la Google Cloud Console.
+
+### Développement local du front controller
+
+Le serveur PHP intégré rejoue le même routage que Vercel, sans Docker :
+
+```bash
+php -S localhost:8000 api/index.php
+```
 
 ---
 
