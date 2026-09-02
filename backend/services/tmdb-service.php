@@ -49,7 +49,6 @@ function tmdb_get(string $endpoint, array $params = [], int $cacheTtl = 0): ?arr
 
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
 
     if ($response === false || $httpCode !== 200) {
         error_log("TMDB API Error [{$httpCode}] on {$endpoint}");

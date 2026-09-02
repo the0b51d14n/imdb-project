@@ -92,7 +92,6 @@ function _oauth_post(string $url, array $data): ?array
     ]);
     $res  = curl_exec($ch);
     $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
     if (!$res || $code !== 200) return null;
     return json_decode($res, true);
 }
@@ -108,7 +107,6 @@ function _oauth_get(string $url, string $token): ?array
     ]);
     $res  = curl_exec($ch);
     $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
     if (!$res || $code !== 200) return null;
     return json_decode($res, true);
 }
