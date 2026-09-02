@@ -9,6 +9,7 @@ require_once __DIR__ . '/../services/auth.php';
 require_once __DIR__ . '/../services/cart.php';
 require_once __DIR__ . '/../services/orders.php';
 require_once __DIR__ . '/../services/csrf.php';
+require_once __DIR__ . '/../services/ratings.php';
 
 auth_start_session();
 
@@ -64,6 +65,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'add_t
 
 $inCart    = auth_check() && cart_has($movie['id']);
 $purchased = auth_check() && orders_has_purchased($movie['id']);
+
+// Notes et avis — rendus côté serveur pour rester lisibles sans JavaScript,
+// puis rafraîchis par rating-widget.js après chaque vote.
+$ratings = rating_get_for_movie($movie['id']);
 
 $recommended = [];
 $recData = tmdb_get('/movie/' . $movie['id'] . '/recommendations', ['page' => 1]);
@@ -244,6 +249,35 @@ include __DIR__ . '/../partials/navbar.php';
         </div>
         <?php endif; ?>
 
+        <!-- Notes et avis -->
+        <div class="movie-ratings-section">
+          <div class="movie-cast-label">Notes et avis</div>
+
+          <div class="rw-global-stats" data-rating-stats>
+            <span class="rw-avg"><?= $ratings['count'] > 0 ? number_format($ratings['avg'], 1) . '/5' : '-' ?></span>
+            <span class="rw-count"><?= (int)$ratings['count'] ?> avis</span>
+          </div>
+
+          <div class="rating-widget"
+               data-tmdb-id="<?= (int)$movie['id'] ?>"
+               data-csrf="<?= htmlspecialchars(csrf_token()) ?>"
+               data-purchased="<?= $purchased ? '1' : '0' ?>"></div>
+
+          <?php if (!empty($ratings['reviews'])): ?>
+          <div class="movie-reviews">
+            <?php foreach ($ratings['reviews'] as $review): ?>
+            <div class="movie-review">
+              <div class="movie-review-head">
+                <span class="movie-review-author"><?= htmlspecialchars($review['username']) ?></span>
+                <span class="movie-review-note"><?= (int)$review['rating'] ?>/5</span>
+              </div>
+              <p class="movie-review-text"><?= nl2br(htmlspecialchars($review['comment'])) ?></p>
+            </div>
+            <?php endforeach; ?>
+          </div>
+          <?php endif; ?>
+        </div>
+
       </div>
     </div>
 
@@ -309,5 +343,6 @@ include __DIR__ . '/../partials/navbar.php';
 })();
 </script>
 <script src="<?= $basePath ?>/assets/js/pages/movie-detail.js"></script>
+<script src="<?= $basePath ?>/assets/js/components/rating-widget.js"></script>
 </body>
 </html>
